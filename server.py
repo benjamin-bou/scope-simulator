@@ -489,8 +489,14 @@ class ScopeHandler(SimpleHTTPRequestHandler):
                         <div class="text-center"><label class="text-xs text-slate-400">Cible</label><div id="fc-target" class="text-lg text-green-400 font-bold">120</div></div>
                     </div>
                 </div>
+                <div class="grid grid-cols-4 gap-1 mb-2">
+                    <button class="bg-green-700 hover:bg-green-600 text-white py-1 rounded text-sm font-medium">50</button>
+                    <button class="bg-green-700 hover:bg-green-600 text-white py-1 rounded text-sm font-medium">70</button>
+                    <button class="bg-green-700 hover:bg-green-600 text-white py-1 rounded text-sm font-medium">90</button>
+                    <button class="bg-green-700 hover:bg-green-600 text-white py-1 rounded text-sm font-medium">120</button>
+                </div>
                 <div class="flex space-x-2">
-                    <input type="number" id="fc-input" min="0" max="300" class="flex-1 bg-slate-700 text-white px-3 py-2 rounded" placeholder="0-300" onkeypress="if(event.key==='Enter')updateFC()">
+                    <input type="number" id="fc-input" min="0" max="300" class="flex-1 bg-slate-700 text-white px-3 py-2 rounded" placeholder="120" onkeypress="if(event.key==='Enter')updateFC()">
                     <button onclick="updateFC()" class="bg-green-600 px-4 py-2 rounded font-bold">OK</button>
                 </div>
             </div>
@@ -503,8 +509,15 @@ class ScopeHandler(SimpleHTTPRequestHandler):
                         <div class="text-center"><label class="text-xs text-slate-400">Cible</label><div id="spo2-target" class="text-lg text-cyan-400 font-bold">98</div></div>
                     </div>
                 </div>
+                <div class="grid grid-cols-5 gap-1 mb-2">
+                    <button class="bg-cyan-700 hover:bg-cyan-600 text-white py-1 rounded text-sm font-medium">60</button>
+                    <button class="bg-cyan-700 hover:bg-cyan-600 text-white py-1 rounded text-sm font-medium">70</button>
+                    <button class="bg-cyan-700 hover:bg-cyan-600 text-white py-1 rounded text-sm font-medium">80</button>
+                    <button class="bg-cyan-700 hover:bg-cyan-600 text-white py-1 rounded text-sm font-medium">90</button>
+                    <button class="bg-cyan-700 hover:bg-cyan-600 text-white py-1 rounded text-sm font-medium">100</button>
+                </div>
                 <div class="flex space-x-2">
-                    <input type="number" id="spo2-input" min="0" max="100" class="flex-1 bg-slate-700 text-white px-3 py-2 rounded" placeholder="0-100" onkeypress="if(event.key==='Enter')updateSpO2()">
+                    <input type="number" id="spo2-input" min="0" max="100" class="flex-1 bg-slate-700 text-white px-3 py-2 rounded" placeholder="98" onkeypress="if(event.key==='Enter')updateSpO2()">
                     <button onclick="updateSpO2()" class="bg-cyan-600 px-4 py-2 rounded font-bold">OK</button>
                 </div>
             </div>
@@ -517,8 +530,15 @@ class ScopeHandler(SimpleHTTPRequestHandler):
                         <div class="text-center"><label class="text-xs text-slate-400">Cible</label><div id="fr-target" class="text-lg text-yellow-300 font-bold">50</div></div>
                     </div>
                 </div>
+                <div class="grid grid-cols-5 gap-1 mb-2">
+                    <button class="bg-yellow-700 hover:bg-yellow-600 text-white py-1 rounded text-sm font-medium">20</button>
+                    <button class="bg-yellow-700 hover:bg-yellow-600 text-white py-1 rounded text-sm font-medium">30</button>
+                    <button class="bg-yellow-700 hover:bg-yellow-600 text-white py-1 rounded text-sm font-medium">40</button>
+                    <button class="bg-yellow-700 hover:bg-yellow-600 text-white py-1 rounded text-sm font-medium">50</button>
+                    <button class="bg-yellow-700 hover:bg-yellow-600 text-white py-1 rounded text-sm font-medium">60</button>
+                </div>
                 <div class="flex space-x-2">
-                    <input type="number" id="fr-input" min="0" max="60" class="flex-1 bg-slate-700 text-white px-3 py-2 rounded" placeholder="0-60" onkeypress="if(event.key==='Enter')updateFR()">
+                    <input type="number" id="fr-input" min="0" max="60" class="flex-1 bg-slate-700 text-white px-3 py-2 rounded" placeholder="50" onkeypress="if(event.key==='Enter')updateFR()">
                     <button onclick="updateFR()" class="bg-yellow-600 px-4 py-2 rounded font-bold">OK</button>
                 </div>
             </div>
