@@ -90,4 +90,12 @@ if exist "python-portable\python.zip" (
 
 :end
 echo.
+echo ===================================
+echo Le serveur est maintenant actif
+echo Vous pouvez fermer cette fenetre
+echo L'application restera accessible
+echo ===================================
+echo.
+echo Pour arreter: fermez simplement cette fenetre
+echo.
 pause
