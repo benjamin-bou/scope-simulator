@@ -1,8 +1,8 @@
 import React from 'react';
-import { WaveformTrace } from './ECGTrace'; // Still named ECGTrace here, but it's the new WaveformTrace
+import { WaveformTrace } from './WaveformTrace';
 import { VitalsDisplay } from './VitalsDisplay';
-import type { Scenario } from '../types';
-import { ASYSTOLE_PATTERN, PLETH_FLAT_PATTERN, RESP_APNEA_PATTERN } from '../constants'; // For fallback patterns
+import type { Scenario } from '../../types';
+import { ASYSTOLE_PATTERN, PLETH_FLAT_PATTERN, RESP_APNEA_PATTERN } from '../../constants';
 
 interface ScopeDisplayProps {
   scenario: Scenario;

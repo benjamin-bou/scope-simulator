@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { ScopeDisplay } from './components/ScopeDisplay';
+import { ScopeDisplay } from './components/scope';
 import { SCENARIOS, DEFAULT_SCENARIO_INDEX } from './constants';
 import type { Scenario } from './types';
 

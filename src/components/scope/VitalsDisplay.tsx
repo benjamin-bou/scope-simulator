@@ -1,6 +1,6 @@
 import React from 'react';
-import type { Scenario } from '../types';
-import { HeartIcon } from './icons/HeartIcon';
+import type { Scenario } from '../../types';
+import { HeartIcon } from '../../assets/icons';
 
 interface VitalSignProps {
   label: string;

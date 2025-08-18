@@ -1,4 +1,4 @@
-import type { Scenario } from './types';
+import type { Scenario } from '../types';
 
 export const SAMPLES_PER_SECOND = 50; // Increased for smoother waves
 export const DATA_POINTS_COUNT = SAMPLES_PER_SECOND * 8; // Show 8 seconds of data

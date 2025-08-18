@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip } from 'recharts';
-import type { Scenario } from '../types'; // Keep for scenarioId type checking
-import { DATA_POINTS_COUNT, UPDATE_INTERVAL_MS, SAMPLES_PER_SECOND } from '../constants';
+import { DATA_POINTS_COUNT, UPDATE_INTERVAL_MS, SAMPLES_PER_SECOND } from '../../constants';
 
 interface DataPoint {
   timestamp: number;
