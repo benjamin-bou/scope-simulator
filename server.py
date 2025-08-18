@@ -171,16 +171,20 @@ class ScopeHandler(SimpleHTTPRequestHandler):
     </div>
     
     <script>
-        // Configuration identique à la version TSX
+        // Configuration du balayage scope réaliste
         const SAMPLES_PER_SECOND = 50;
-        const DATA_POINTS_COUNT = SAMPLES_PER_SECOND * 8; // 8 secondes de données
         const UPDATE_INTERVAL_MS = 1000 / SAMPLES_PER_SECOND; // 20ms
+        const CANVAS_WIDTH = 800;
+        const SWEEP_SPEED = 2; // pixels par frame
+        const ERASE_WIDTH = 20; // largeur de la zone d'effacement
         
-        // Données défilantes comme dans la version TSX
-        let ecgData = Array(DATA_POINTS_COUNT).fill(0).map((_, i) => ({ timestamp: i, value: 0 }));
-        let plethData = Array(DATA_POINTS_COUNT).fill(0).map((_, i) => ({ timestamp: i, value: 0.5 }));
-        let respData = Array(DATA_POINTS_COUNT).fill(0).map((_, i) => ({ timestamp: i, value: 0 }));
-        let globalTimestamp = DATA_POINTS_COUNT;
+        // Buffers de données pour chaque courbe (index = position X sur le canvas)
+        let ecgBuffer = new Array(CANVAS_WIDTH).fill(null);
+        let plethBuffer = new Array(CANVAS_WIDTH).fill(null);
+        let respBuffer = new Array(CANVAS_WIDTH).fill(null);
+        
+        // Position actuelle du balayage (de 0 à CANVAS_WIDTH puis revient à 0)
+        let sweepPosition = 0;
         
         // Pattern ECG réaliste (identique à la version TSX)
         const NORMAL_SINUS_PATTERN_BASE = [
@@ -232,11 +236,11 @@ class ScopeHandler(SimpleHTTPRequestHandler):
         let plethCurrentCycleSamples = 0;
         let respCurrentCycleSamples = 0;
         
-        function drawWaveform(canvasId, data, color, yDomain) {
+        function drawScopeWaveform(canvasId, buffer, color, yDomain) {
             const canvas = document.getElementById(canvasId);
             const ctx = canvas.getContext('2d');
             
-            // Effacer le canvas
+            // Effacer le canvas complètement
             ctx.fillStyle = '#000000';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             
@@ -256,24 +260,37 @@ class ScopeHandler(SimpleHTTPRequestHandler):
                 ctx.stroke();
             }
             
-            // Dessiner la courbe
-            if (data.length > 1) {
-                ctx.strokeStyle = color;
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                
-                const step = canvas.width / (data.length - 1);
-                for (let i = 0; i < data.length; i++) {
-                    const x = i * step;
-                    const normalizedY = (data[i].value - yDomain[0]) / (yDomain[1] - yDomain[0]);
+            // Dessiner la courbe - approche simplifiée qui marche
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            
+            let hasStarted = false;
+            let lastValidX = -1;
+            
+            for (let x = 0; x < buffer.length; x++) {
+                if (buffer[x] !== null) {
+                    const normalizedY = (buffer[x] - yDomain[0]) / (yDomain[1] - yDomain[0]);
                     const y = canvas.height * (1 - normalizedY);
                     
-                    if (i === 0) {
+                    if (!hasStarted) {
                         ctx.moveTo(x, y);
+                        hasStarted = true;
                     } else {
-                        ctx.lineTo(x, y);
+                        // Si il y a plus de 5 pixels de gap, commencer un nouveau segment
+                        if (x - lastValidX > 5) {
+                            ctx.stroke();
+                            ctx.beginPath();
+                            ctx.moveTo(x, y);
+                        } else {
+                            ctx.lineTo(x, y);
+                        }
                     }
+                    lastValidX = x;
                 }
+            }
+            
+            if (hasStarted) {
                 ctx.stroke();
             }
         }
@@ -352,36 +369,49 @@ class ScopeHandler(SimpleHTTPRequestHandler):
                 lastFR = vitals.current.fr;
             }
             
-            // ECG - basé sur la FC actuelle
+            // Calculer la position d'écriture actuelle
+            const writePosition = Math.floor(sweepPosition) % CANVAS_WIDTH;
+            
+            // Générer et écrire le nouveau point à la position de balayage
             const ecgResult = generateNextPoint(ecgPattern, ecgCycleProgress, ecgCurrentCycleSamples, vitals.current.fc, [-1.5, 2], 'ecg');
             ecgCycleProgress = ecgResult.newProgress;
             ecgCurrentCycleSamples = ecgResult.newCycleSamples;
+            ecgBuffer[writePosition] = ecgResult.value;
             
-            ecgData = ecgData.slice(1);
-            ecgData.push({ timestamp: globalTimestamp, value: ecgResult.value });
-            
-            // Pleth - basé sur la FC et SpO2 actuelles
             const plethResult = generateNextPoint(plethPattern, plethCycleProgress, plethCurrentCycleSamples, vitals.current.fc, [-0.2, 1.2], 'pleth');
             plethCycleProgress = plethResult.newProgress;
             plethCurrentCycleSamples = plethResult.newCycleSamples;
+            plethBuffer[writePosition] = plethResult.value;
             
-            plethData = plethData.slice(1);
-            plethData.push({ timestamp: globalTimestamp, value: plethResult.value });
-            
-            // Resp - basé sur la FR actuelle
             const respResult = generateNextPoint(respPattern, respCycleProgress, respCurrentCycleSamples, vitals.current.fr, [-0.6, 0.6], 'resp');
             respCycleProgress = respResult.newProgress;
             respCurrentCycleSamples = respResult.newCycleSamples;
+            respBuffer[writePosition] = respResult.value;
             
-            respData = respData.slice(1);
-            respData.push({ timestamp: globalTimestamp, value: respResult.value });
+            // DEBUG - Log pour voir ce qui se passe
+            if (Math.floor(sweepPosition) % 50 === 0) {
+                console.log('Position:', writePosition, 'ECG:', ecgResult.value, 'FC:', vitals.current.fc);
+                console.log('Buffer sample:', ecgBuffer.slice(writePosition-5, writePosition+5));
+            }
             
-            globalTimestamp += 1;
+            // Effacer la zone de balayage APRÈS avoir écrit le nouveau point (créer l'espace vide)
+            for (let i = 1; i < ERASE_WIDTH; i++) {
+                const pos = (writePosition + i) % CANVAS_WIDTH;
+                ecgBuffer[pos] = null;
+                plethBuffer[pos] = null;
+                respBuffer[pos] = null;
+            }
             
-            // Dessiner les courbes
-            drawWaveform('ecg-canvas', ecgData, '#10b981', [-1.5, 2]);
-            drawWaveform('pleth-canvas', plethData, '#06b6d4', [-0.2, 1.2]);
-            drawWaveform('resp-canvas', respData, '#eab308', [-0.6, 0.6]);
+            // Avancer la position de balayage
+            sweepPosition += SWEEP_SPEED;
+            if (sweepPosition >= CANVAS_WIDTH) {
+                sweepPosition = 0; // Revenir au début
+            }
+            
+            // Dessiner les courbes avec le système de balayage
+            drawScopeWaveform('ecg-canvas', ecgBuffer, '#10b981', [-1.5, 2]);
+            drawScopeWaveform('pleth-canvas', plethBuffer, '#06b6d4', [-0.2, 1.2]);
+            drawScopeWaveform('resp-canvas', respBuffer, '#eab308', [-0.6, 0.6]);
         }
         
         let vitals = {current: {fc: 75, spo2: 98, fr: 16}};
