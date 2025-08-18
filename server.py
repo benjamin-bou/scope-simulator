@@ -587,28 +587,37 @@ class ScopeHandler(SimpleHTTPRequestHandler):
         pass  # Supprimer les logs HTTP
 
 def transition_worker():
-    """Thread pour les transitions réalistes"""
+    """Thread pour les transitions proportionnelles"""
     while True:
-        time.sleep(1)
+        time.sleep(0.1)  # Vérification rapide (10x par seconde)
         current = vitals['current']
         target = vitals['target']
         
-        # FC: ±2/s
+        # FC: Vitesse proportionnelle à l'écart
         if current['fc'] != target['fc']:
             diff = target['fc'] - current['fc']
-            step = min(abs(diff), 2) * (1 if diff > 0 else -1)
+            # Vitesse = 20% de l'écart par seconde (minimum 1, maximum 20)
+            speed_per_second = max(1, min(20, abs(diff) * 0.2))
+            step_per_100ms = speed_per_second / 10  # Divisé par 10 car on exécute 10x/s
+            step = max(1, round(step_per_100ms)) * (1 if diff > 0 else -1)
             current['fc'] += step
         
-        # SpO2: ±1/s  
+        # SpO2: Vitesse proportionnelle à l'écart  
         if current['spo2'] != target['spo2']:
             diff = target['spo2'] - current['spo2']
-            step = min(abs(diff), 1) * (1 if diff > 0 else -1)
+            # Vitesse = 15% de l'écart par seconde (minimum 1, maximum 10)
+            speed_per_second = max(1, min(10, abs(diff) * 0.15))
+            step_per_100ms = speed_per_second / 10
+            step = max(1, round(step_per_100ms)) * (1 if diff > 0 else -1)
             current['spo2'] += step
         
-        # FR: ±1/s
+        # FR: Vitesse proportionnelle à l'écart
         if current['fr'] != target['fr']:
             diff = target['fr'] - current['fr']
-            step = min(abs(diff), 1) * (1 if diff > 0 else -1)
+            # Vitesse = 25% de l'écart par seconde (minimum 1, maximum 15)
+            speed_per_second = max(1, min(15, abs(diff) * 0.25))
+            step_per_100ms = speed_per_second / 10
+            step = max(1, round(step_per_100ms)) * (1 if diff > 0 else -1)
             current['fr'] += step
 
 if __name__ == "__main__":

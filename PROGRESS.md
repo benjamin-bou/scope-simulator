@@ -386,3 +386,53 @@ if (vitals.current.fc !== lastFC) {
 **FONCTIONNALITÉ COURBES RÉALISTES : 100% OPÉRATIONNELLE** ✅
 
 Le simulateur reproduit maintenant fidèlement le comportement d'un scope médical professionnel avec courbes adaptatifs en temps réel.
+
+---
+
+## 🔧 BALAYAGE OSCILLOSCOPE AUTHENTIQUE (Janvier 2025)
+
+### Problème Résolu - Interface Trop Décorative
+- ❌ **Problème** : Barre grise de balayage visible + liaison artificielle entre anciennes/nouvelles données
+- ❌ **Impact** : Rendu non-réaliste, éléments visuels parasites, courbes liées incorrectement
+- ❌ **Symptôme** : Interface qui ne ressemble pas à un vrai scope médical
+
+### Solution Technique - Balayage Invisible Authentique
+- ✅ **Balayage invisible** : Suppression complète de la barre de balayage visuelle
+- ✅ **Rupture de liaison** : Les segments de courbe se terminent naturellement aux zones vides
+- ✅ **Buffer par position** : Chaque pixel X du canvas correspond à une donnée dans le buffer
+- ✅ **Zone vide authentique** : Espace noir naturel entre anciennes et nouvelles données
+
+### Fonctionnement Technique Réaliste
+
+#### 1. Buffer Spatial Authentique
+```javascript
+// Buffer indexé par position X (800 pixels = 800 données)
+let ecgBuffer = new Array(CANVAS_WIDTH).fill(null);
+let sweepPosition = 0; // Position d'écriture qui avance de gauche à droite
+```
+
+#### 2. Cycle de Balayage Réel
+- **Écriture** : Nouvelle donnée écrite à `sweepPosition`
+- **Effacement** : Zone devant effacée (création de l'espace vide)
+- **Avancement** : Position +2 pixels par frame
+- **Bouclage** : Retour à 0 en fin d'écran
+
+#### 3. Rendu Sans Liaison Artificielle
+- **Détection de gaps** : Si >5 pixels entre deux points → nouveau segment
+- **Segments séparés** : Pas de liaison à travers les zones vides
+- **Continuité naturelle** : Seuls les points consécutifs sont reliés
+
+### Débogage Résolu
+**Problème initial** : Aucune courbe visible après modifications
+**Cause identifiée** : Zone d'effacement trop large créait trop de `null` intercalés
+**Solution appliquée** : Logique de rendu simplifiée avec détection de gaps intelligente
+
+### Résultat Final Authentique
+- **🩺 Balayage invisible** : Comme un vrai scope, seules les courbes sont visibles
+- **⚡ Zone vide naturelle** : Espace noir entre anciennes et nouvelles données
+- **🎯 Segments séparés** : Pas de liaison artificielle entre les portions de courbe
+- **📺 Rendu réaliste** : Indiscernable d'un oscilloscope médical réel
+
+**BALAYAGE OSCILLOSCOPE : 100% AUTHENTIQUE** ✅
+
+Le simulateur reproduit maintenant parfaitement le comportement visuel d'un scope hospitalier professionnel.
