@@ -526,6 +526,43 @@ class ScopeHandler(SimpleHTTPRequestHandler):
             <div class="bg-slate-800 rounded-lg p-3">
                 <button onclick="reset()" class="w-full bg-red-600 px-4 py-2 rounded font-bold">Reset</button>
             </div>
+            
+            <!-- Présets -->
+            <div class="bg-slate-800 rounded-lg p-3">
+                <div class="grid grid-cols-2 gap-2">
+                    <button class="bg-slate-700 hover:bg-slate-600 text-white px-2 py-3 rounded transition-colors">
+                        <div class="text-center text-lg font-bold">
+                            <div class="text-green-400">FC: 75</div>
+                            <div class="text-cyan-400">SpO₂: 98%</div>
+                            <div class="text-yellow-300">FR: 16</div>
+                        </div>
+                    </button>
+
+                    <button class="bg-slate-700 hover:bg-slate-600 text-white px-2 py-3 rounded transition-colors">
+                        <div class="text-center text-lg font-bold">
+                            <div class="text-green-400">FC: 110</div>
+                            <div class="text-cyan-400">SpO₂: 96%</div>
+                            <div class="text-yellow-300">FR: 20</div>
+                        </div>
+                    </button>
+
+                    <button class="bg-slate-700 hover:bg-slate-600 text-white px-2 py-3 rounded transition-colors">
+                        <div class="text-center text-lg font-bold">
+                            <div class="text-green-400">FC: 45</div>
+                            <div class="text-cyan-400">SpO₂: 94%</div>
+                            <div class="text-yellow-300">FR: 12</div>
+                        </div>
+                    </button>
+
+                    <button class="bg-slate-700 hover:bg-slate-600 text-white px-2 py-3 rounded transition-colors">
+                        <div class="text-center text-lg font-bold">
+                            <div class="text-green-400">FC: 130</div>
+                            <div class="text-cyan-400">SpO₂: 85%</div>
+                            <div class="text-yellow-300">FR: 28</div>
+                        </div>
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
     
