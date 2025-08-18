@@ -121,7 +121,7 @@ class ScopeHandler(SimpleHTTPRequestHandler):
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>🎯 Simulateur de Scope Médical</title>
+    <title>Simulateur de Scope Médical</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .heart-beat { animation: heartbeat 1s infinite; }
@@ -132,8 +132,8 @@ class ScopeHandler(SimpleHTTPRequestHandler):
 </head>
 <body class="bg-black text-white min-h-screen">
     <div id="connection-info" class="absolute top-2 left-2 text-xs bg-slate-800 p-2 rounded text-slate-400">
-        <div>📱 Mobile: <a href="''' + mobile_url + '''" class="text-blue-400 underline">''' + mobile_url + '''</a></div>
-        <div id="status">🔗 <span class="text-yellow-400">En attente...</span></div>
+        <div>Mobile: <a href="''' + mobile_url + '''" class="text-blue-400 underline">''' + mobile_url + '''</a></div>
+        <div id="status"><span class="text-yellow-400">En attente...</span></div>
     </div>
     
     <div class="h-screen flex items-center justify-center p-4">
@@ -146,33 +146,25 @@ class ScopeHandler(SimpleHTTPRequestHandler):
             </div>
             
             <div class="bg-slate-800 rounded p-4 flex flex-col justify-around">
-                <div class="flex items-center justify-between">
+                <div class="flex items-center justify-between py-6">
                     <div class="flex items-center">
-                        <div class="w-6 h-6 mr-2 text-green-400 heart-beat">💚</div>
-                        <div><span class="text-green-400 font-medium">FC</span><span class="text-xs text-green-400 opacity-80 ml-1">bpm</span></div>
+                        <div><span class="text-green-400 font-bold text-lg">FC</span><span class="text-sm text-green-400 opacity-80 ml-2">bpm</span></div>
                     </div>
-                    <div id="fc-display" class="text-4xl font-bold text-green-400 vital-display">75</div>
+                    <div id="fc-display" class="text-6xl font-bold text-green-400 vital-display">75</div>
                 </div>
                 
-                <div class="flex items-center justify-between">
+                <div class="flex items-center justify-between py-6">
                     <div class="flex items-center">
-                        <div class="w-6 h-6 mr-2 text-cyan-400">🌊</div>
-                        <div><span class="text-cyan-400 font-medium">SpO₂</span><span class="text-xs text-cyan-400 opacity-80 ml-1">%</span></div>
+                        <div><span class="text-cyan-400 font-bold text-lg">SpO₂</span><span class="text-sm text-cyan-400 opacity-80 ml-2">%</span></div>
                     </div>
-                    <div id="spo2-display" class="text-4xl font-bold text-cyan-400 vital-display">98</div>
+                    <div id="spo2-display" class="text-6xl font-bold text-cyan-400 vital-display">98</div>
                 </div>
                 
-                <div class="flex items-center justify-between">
+                <div class="flex items-center justify-between py-6">
                     <div class="flex items-center">
-                        <div class="w-6 h-6 mr-2 text-yellow-300">〰️</div>
-                        <div><span class="text-yellow-300 font-medium">FR</span><span class="text-xs text-yellow-300 opacity-80 ml-1">/min</span></div>
+                        <div><span class="text-yellow-300 font-bold text-lg">FR</span><span class="text-sm text-yellow-300 opacity-80 ml-2">/min</span></div>
                     </div>
-                    <div id="fr-display" class="text-4xl font-bold text-yellow-300 vital-display">16</div>
-                </div>
-                
-                <div class="flex items-center justify-between pt-4">
-                    <div><span class="text-lime-400 font-medium">PNI</span><span class="text-xs text-lime-400 opacity-80 ml-1">mmHg</span></div>
-                    <div class="text-3xl font-bold text-lime-400 vital-display">120/80</div>
+                    <div id="fr-display" class="text-6xl font-bold text-yellow-300 vital-display">16</div>
                 </div>
             </div>
         </div>
@@ -405,13 +397,13 @@ class ScopeHandler(SimpleHTTPRequestHandler):
                     
                     const status = document.getElementById('status');
                     if (data.mobile_connected) {
-                        status.innerHTML = '📱 <span class="text-green-400">Mobile connecté</span>';
+                        status.innerHTML = '<span class="text-green-400">Mobile connecté</span>';
                     } else {
-                        status.innerHTML = '🔗 <span class="text-yellow-400">En attente...</span>';
+                        status.innerHTML = '<span class="text-yellow-400">En attente...</span>';
                     }
                 })
                 .catch(() => {
-                    document.getElementById('status').innerHTML = '❌ <span class="text-red-400">Erreur</span>';
+                    document.getElementById('status').innerHTML = '<span class="text-red-400">Erreur</span>';
                 });
         }
         
@@ -442,57 +434,57 @@ class ScopeHandler(SimpleHTTPRequestHandler):
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>📱 Contrôle Mobile</title>
+    <title>Contrôle Mobile</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-900 text-white min-h-screen">
     <div class="container mx-auto p-4 max-w-md">
         <div class="text-center mb-6">
-            <h1 class="text-2xl font-bold">📱 Contrôle Scope</h1>
-            <div id="status" class="text-green-400 mt-2">✅ Connecté</div>
+            <h1 class="text-2xl font-bold">Contrôle Scope</h1>
+            <div id="status" class="text-green-400 mt-2">Connecté</div>
         </div>
         
         <div class="space-y-4">
             <div class="bg-slate-800 rounded-lg p-4">
-                <h3 class="text-green-400 text-lg font-semibold mb-3">💚 FC (bpm)</h3>
+                <h3 class="text-green-400 text-lg font-semibold mb-3">FC (bpm)</h3>
                 <div class="grid grid-cols-2 gap-4 mb-3">
-                    <div><label class="text-xs text-slate-400">Actuelle</label><div id="fc-current" class="text-xl text-green-400">75</div></div>
-                    <div><label class="text-xs text-slate-400">Cible</label><div id="fc-target" class="text-xl text-green-400">75</div></div>
+                    <div><label class="text-xs text-slate-400">Actuelle</label><div id="fc-current" class="text-2xl text-green-400 font-bold">75</div></div>
+                    <div><label class="text-xs text-slate-400">Cible</label><div id="fc-target" class="text-2xl text-green-400 font-bold">75</div></div>
                 </div>
                 <div class="flex space-x-2">
                     <input type="number" id="fc-input" min="0" max="300" class="flex-1 bg-slate-700 text-white px-3 py-2 rounded" placeholder="0-300">
-                    <button onclick="updateFC()" class="bg-green-600 px-4 py-2 rounded">✓</button>
+                    <button onclick="updateFC()" class="bg-green-600 px-4 py-2 rounded font-bold">OK</button>
                 </div>
             </div>
             
             <div class="bg-slate-800 rounded-lg p-4">
-                <h3 class="text-cyan-400 text-lg font-semibold mb-3">💙 SpO₂ (%)</h3>
+                <h3 class="text-cyan-400 text-lg font-semibold mb-3">SpO₂ (%)</h3>
                 <div class="grid grid-cols-2 gap-4 mb-3">
-                    <div><label class="text-xs text-slate-400">Actuelle</label><div id="spo2-current" class="text-xl text-cyan-400">98</div></div>
-                    <div><label class="text-xs text-slate-400">Cible</label><div id="spo2-target" class="text-xl text-cyan-400">98</div></div>
+                    <div><label class="text-xs text-slate-400">Actuelle</label><div id="spo2-current" class="text-2xl text-cyan-400 font-bold">98</div></div>
+                    <div><label class="text-xs text-slate-400">Cible</label><div id="spo2-target" class="text-2xl text-cyan-400 font-bold">98</div></div>
                 </div>
                 <div class="flex space-x-2">
                     <input type="number" id="spo2-input" min="0" max="100" class="flex-1 bg-slate-700 text-white px-3 py-2 rounded" placeholder="0-100">
-                    <button onclick="updateSpO2()" class="bg-cyan-600 px-4 py-2 rounded">✓</button>
+                    <button onclick="updateSpO2()" class="bg-cyan-600 px-4 py-2 rounded font-bold">OK</button>
                 </div>
             </div>
             
             <div class="bg-slate-800 rounded-lg p-4">
-                <h3 class="text-yellow-300 text-lg font-semibold mb-3">💛 FR (/min)</h3>
+                <h3 class="text-yellow-300 text-lg font-semibold mb-3">FR (/min)</h3>
                 <div class="grid grid-cols-2 gap-4 mb-3">
-                    <div><label class="text-xs text-slate-400">Actuelle</label><div id="fr-current" class="text-xl text-yellow-300">16</div></div>
-                    <div><label class="text-xs text-slate-400">Cible</label><div id="fr-target" class="text-xl text-yellow-300">16</div></div>
+                    <div><label class="text-xs text-slate-400">Actuelle</label><div id="fr-current" class="text-2xl text-yellow-300 font-bold">16</div></div>
+                    <div><label class="text-xs text-slate-400">Cible</label><div id="fr-target" class="text-2xl text-yellow-300 font-bold">16</div></div>
                 </div>
                 <div class="flex space-x-2">
                     <input type="number" id="fr-input" min="0" max="60" class="flex-1 bg-slate-700 text-white px-3 py-2 rounded" placeholder="0-60">
-                    <button onclick="updateFR()" class="bg-yellow-600 px-4 py-2 rounded">✓</button>
+                    <button onclick="updateFR()" class="bg-yellow-600 px-4 py-2 rounded font-bold">OK</button>
                 </div>
             </div>
             
             <div class="bg-slate-800 rounded-lg p-4">
                 <div class="flex space-x-2">
-                    <button onclick="reset()" class="flex-1 bg-red-600 px-4 py-2 rounded">🔄 Reset</button>
-                    <button onclick="emergency()" class="flex-1 bg-orange-600 px-4 py-2 rounded">🚨 Urgence</button>
+                    <button onclick="reset()" class="flex-1 bg-red-600 px-4 py-2 rounded font-bold">Reset</button>
+                    <button onclick="emergency()" class="flex-1 bg-orange-600 px-4 py-2 rounded font-bold">Urgence</button>
                 </div>
             </div>
         </div>
