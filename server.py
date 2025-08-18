@@ -30,8 +30,8 @@ SERVER_IP = "0.0.0.0"
 
 # État des signes vitaux
 vitals = {
-    'current': {'fc': 75, 'spo2': 98, 'fr': 16},
-    'target': {'fc': 75, 'spo2': 98, 'fr': 16},
+    'current': {'fc': 120, 'spo2': 98, 'fr': 50},
+    'target': {'fc': 120, 'spo2': 98, 'fr': 50},
     'mobile_connected': False,
     'last_mobile_ping': 0
 }
@@ -148,23 +148,23 @@ class ScopeHandler(SimpleHTTPRequestHandler):
             <div class="bg-slate-800 rounded p-4 flex flex-col justify-around">
                 <div class="flex items-center justify-between py-6">
                     <div class="flex items-center">
-                        <div><span class="text-green-400 font-bold text-lg">FC</span><span class="text-sm text-green-400 opacity-80 ml-2">bpm</span></div>
+                        <div><span class="text-green-400 font-bold text-2xl">FC</span><span class="text-lg text-green-400 opacity-80 ml-3">bpm</span></div>
                     </div>
-                    <div id="fc-display" class="text-6xl font-bold text-green-400 vital-display">75</div>
+                    <div id="fc-display" class="text-7xl font-bold text-green-400 vital-display">120</div>
                 </div>
                 
                 <div class="flex items-center justify-between py-6">
                     <div class="flex items-center">
-                        <div><span class="text-cyan-400 font-bold text-lg">SpO₂</span><span class="text-sm text-cyan-400 opacity-80 ml-2">%</span></div>
+                        <div><span class="text-cyan-400 font-bold text-2xl">SpO₂</span><span class="text-lg text-cyan-400 opacity-80 ml-3">%</span></div>
                     </div>
-                    <div id="spo2-display" class="text-6xl font-bold text-cyan-400 vital-display">98</div>
+                    <div id="spo2-display" class="text-7xl font-bold text-cyan-400 vital-display">98</div>
                 </div>
                 
                 <div class="flex items-center justify-between py-6">
                     <div class="flex items-center">
-                        <div><span class="text-yellow-300 font-bold text-lg">FR</span><span class="text-sm text-yellow-300 opacity-80 ml-2">/min</span></div>
+                        <div><span class="text-yellow-300 font-bold text-2xl">FR</span><span class="text-lg text-yellow-300 opacity-80 ml-3">/min</span></div>
                     </div>
-                    <div id="fr-display" class="text-6xl font-bold text-yellow-300 vital-display">16</div>
+                    <div id="fr-display" class="text-7xl font-bold text-yellow-300 vital-display">50</div>
                 </div>
             </div>
         </div>
@@ -345,9 +345,9 @@ class ScopeHandler(SimpleHTTPRequestHandler):
         }
         
         // Variables pour détecter les changements de valeurs
-        let lastFC = 75;
+        let lastFC = 120;
         let lastSpO2 = 98;
-        let lastFR = 16;
+        let lastFR = 50;
         
         function updateWaveforms() {
             // Détecter les changements de valeurs et réinitialiser les cycles si nécessaire
@@ -414,16 +414,22 @@ class ScopeHandler(SimpleHTTPRequestHandler):
             drawScopeWaveform('resp-canvas', respBuffer, '#eab308', [-0.6, 0.6]);
         }
         
-        let vitals = {current: {fc: 75, spo2: 98, fr: 16}};
+        let vitals = {current: {fc: 120, spo2: 98, fr: 50}};
         
         function updateDisplay() {
             fetch('/api/vitals')
                 .then(r => r.json())
                 .then(data => {
                     vitals = data;
-                    document.getElementById('fc-display').textContent = data.current.fc;
-                    document.getElementById('spo2-display').textContent = data.current.spo2;
-                    document.getElementById('fr-display').textContent = data.current.fr;
+                    
+                    // Ajouter oscillations ±1 sur l'affichage
+                    const fcOscillation = Math.round((Math.random() - 0.5) * 2); // -1, 0, ou +1
+                    const spo2Oscillation = Math.round((Math.random() - 0.5) * 2);
+                    const frOscillation = Math.round((Math.random() - 0.5) * 2);
+                    
+                    document.getElementById('fc-display').textContent = Math.max(0, data.current.fc + fcOscillation);
+                    document.getElementById('spo2-display').textContent = Math.max(0, Math.min(100, data.current.spo2 + spo2Oscillation));
+                    document.getElementById('fr-display').textContent = Math.max(0, data.current.fr + frOscillation);
                     
                     const status = document.getElementById('status');
                     if (data.mobile_connected) {
@@ -474,48 +480,51 @@ class ScopeHandler(SimpleHTTPRequestHandler):
             <div id="status" class="text-green-400 mt-2">Connecté</div>
         </div>
         
-        <div class="space-y-4">
-            <div class="bg-slate-800 rounded-lg p-4">
-                <h3 class="text-green-400 text-lg font-semibold mb-3">FC (bpm)</h3>
-                <div class="grid grid-cols-2 gap-4 mb-3">
-                    <div><label class="text-xs text-slate-400">Actuelle</label><div id="fc-current" class="text-2xl text-green-400 font-bold">75</div></div>
-                    <div><label class="text-xs text-slate-400">Cible</label><div id="fc-target" class="text-2xl text-green-400 font-bold">75</div></div>
+        <div class="space-y-3">
+            <div class="bg-slate-800 rounded-lg p-3">
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="text-green-400 text-lg font-semibold">FC (bpm)</h3>
+                    <div class="flex space-x-4">
+                        <div class="text-center"><label class="text-xs text-slate-400">Actuelle</label><div id="fc-current" class="text-lg text-green-400 font-bold">120</div></div>
+                        <div class="text-center"><label class="text-xs text-slate-400">Cible</label><div id="fc-target" class="text-lg text-green-400 font-bold">120</div></div>
+                    </div>
                 </div>
                 <div class="flex space-x-2">
-                    <input type="number" id="fc-input" min="0" max="300" class="flex-1 bg-slate-700 text-white px-3 py-2 rounded" placeholder="0-300">
+                    <input type="number" id="fc-input" min="0" max="300" class="flex-1 bg-slate-700 text-white px-3 py-2 rounded" placeholder="0-300" onkeypress="if(event.key==='Enter')updateFC()">
                     <button onclick="updateFC()" class="bg-green-600 px-4 py-2 rounded font-bold">OK</button>
                 </div>
             </div>
             
-            <div class="bg-slate-800 rounded-lg p-4">
-                <h3 class="text-cyan-400 text-lg font-semibold mb-3">SpO₂ (%)</h3>
-                <div class="grid grid-cols-2 gap-4 mb-3">
-                    <div><label class="text-xs text-slate-400">Actuelle</label><div id="spo2-current" class="text-2xl text-cyan-400 font-bold">98</div></div>
-                    <div><label class="text-xs text-slate-400">Cible</label><div id="spo2-target" class="text-2xl text-cyan-400 font-bold">98</div></div>
+            <div class="bg-slate-800 rounded-lg p-3">
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="text-cyan-400 text-lg font-semibold">SpO₂ (%)</h3>
+                    <div class="flex space-x-4">
+                        <div class="text-center"><label class="text-xs text-slate-400">Actuelle</label><div id="spo2-current" class="text-lg text-cyan-400 font-bold">98</div></div>
+                        <div class="text-center"><label class="text-xs text-slate-400">Cible</label><div id="spo2-target" class="text-lg text-cyan-400 font-bold">98</div></div>
+                    </div>
                 </div>
                 <div class="flex space-x-2">
-                    <input type="number" id="spo2-input" min="0" max="100" class="flex-1 bg-slate-700 text-white px-3 py-2 rounded" placeholder="0-100">
+                    <input type="number" id="spo2-input" min="0" max="100" class="flex-1 bg-slate-700 text-white px-3 py-2 rounded" placeholder="0-100" onkeypress="if(event.key==='Enter')updateSpO2()">
                     <button onclick="updateSpO2()" class="bg-cyan-600 px-4 py-2 rounded font-bold">OK</button>
                 </div>
             </div>
             
-            <div class="bg-slate-800 rounded-lg p-4">
-                <h3 class="text-yellow-300 text-lg font-semibold mb-3">FR (/min)</h3>
-                <div class="grid grid-cols-2 gap-4 mb-3">
-                    <div><label class="text-xs text-slate-400">Actuelle</label><div id="fr-current" class="text-2xl text-yellow-300 font-bold">16</div></div>
-                    <div><label class="text-xs text-slate-400">Cible</label><div id="fr-target" class="text-2xl text-yellow-300 font-bold">16</div></div>
+            <div class="bg-slate-800 rounded-lg p-3">
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="text-yellow-300 text-lg font-semibold">FR (/min)</h3>
+                    <div class="flex space-x-4">
+                        <div class="text-center"><label class="text-xs text-slate-400">Actuelle</label><div id="fr-current" class="text-lg text-yellow-300 font-bold">50</div></div>
+                        <div class="text-center"><label class="text-xs text-slate-400">Cible</label><div id="fr-target" class="text-lg text-yellow-300 font-bold">50</div></div>
+                    </div>
                 </div>
                 <div class="flex space-x-2">
-                    <input type="number" id="fr-input" min="0" max="60" class="flex-1 bg-slate-700 text-white px-3 py-2 rounded" placeholder="0-60">
+                    <input type="number" id="fr-input" min="0" max="60" class="flex-1 bg-slate-700 text-white px-3 py-2 rounded" placeholder="0-60" onkeypress="if(event.key==='Enter')updateFR()">
                     <button onclick="updateFR()" class="bg-yellow-600 px-4 py-2 rounded font-bold">OK</button>
                 </div>
             </div>
             
-            <div class="bg-slate-800 rounded-lg p-4">
-                <div class="flex space-x-2">
-                    <button onclick="reset()" class="flex-1 bg-red-600 px-4 py-2 rounded font-bold">Reset</button>
-                    <button onclick="emergency()" class="flex-1 bg-orange-600 px-4 py-2 rounded font-bold">Urgence</button>
-                </div>
+            <div class="bg-slate-800 rounded-lg p-3">
+                <button onclick="reset()" class="w-full bg-red-600 px-4 py-2 rounded font-bold">Reset</button>
             </div>
         </div>
     </div>
@@ -566,8 +575,7 @@ class ScopeHandler(SimpleHTTPRequestHandler):
             }
         }
         
-        function reset() { sendUpdate({fc: 75, spo2: 98, fr: 16}); }
-        function emergency() { sendUpdate({fc: 0, spo2: 0, fr: 0}); }
+        function reset() { sendUpdate({fc: 120, spo2: 98, fr: 50}); }
         
         setInterval(updateDisplay, 1000);
         updateDisplay();
