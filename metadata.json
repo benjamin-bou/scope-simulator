@@ -1,0 +1,5 @@
+{
+  "name": "Simulateur de Scope Médical",
+  "description": "Une application React simulant un moniteur d'hôpital pour la formation médicale, permettant aux professeurs de changer dynamiquement les scénarios de signes vitaux (ECG, BPM). L'interface est conçue pour ressembler aux scopes réels utilisés en France, avec des contrôles discrets pour le professeur.",
+  "requestFramePermissions": []
+}
