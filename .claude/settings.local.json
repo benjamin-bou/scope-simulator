@@ -4,7 +4,12 @@
       "Bash(git add:*)",
       "Bash(mkdir:*)",
       "Bash(mv:*)",
-      "Bash(rmdir:*)"
+      "Bash(rmdir:*)",
+      "Bash(rm:*)",
+      "Bash(timeout 3 curl -I http://localhost:3000)",
+      "Bash(python:*)",
+      "Bash(timeout:*)",
+      "Bash(cmd /c:*)"
     ],
     "deny": [],
     "ask": []

@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎯 Simulateur de Scope Médical - Version Autonome</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/recharts@2.8.0/umd/Recharts.js"></script>
+    <style>
+        .waveform-container {
+            background: linear-gradient(to right, 
+                transparent 0%, 
+                transparent 10px, 
+                rgba(75, 85, 99, 0.3) 10px, 
+                rgba(75, 85, 99, 0.3) 11px, 
+                transparent 11px
+            );
+            background-size: 20px 100%;
+        }
+        
+        .transition-indicator {
+            animation: pulse 1s infinite;
+        }
+        
+        .waveform-line {
+            animation: waveScroll 2s linear infinite;
+        }
+        
+        @keyframes waveScroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-20px); }
+        }
+        
+        .heart-beat {
+            animation: heartbeat 1s infinite;
+        }
+        
+        @keyframes heartbeat {
+            0%, 50% { transform: scale(1); }
+            25% { transform: scale(1.1); }
+        }
+        
+        .vital-display {
+            font-family: 'Courier New', monospace;
+            text-shadow: 0 0 10px currentColor;
+        }
+    </style>
+</head>
+<body class="bg-black text-white min-h-screen overflow-hidden">
+    <!-- Mode Scope (par défaut) -->
+    <div id="scope-mode" class="w-full h-screen">
+        <!-- Interface Scope -->
+        <div class="h-screen bg-slate-900 flex flex-col items-center justify-center p-4">
+            <div class="w-full max-w-6xl h-[700px] bg-black rounded-lg shadow-2xl p-2 border-2 border-slate-700 grid grid-cols-[minmax(0,_3fr)_minmax(0,_1fr)] gap-2">
+                
+                <!-- Colonne Gauche: Tracés -->
+                <div class="grid grid-rows-3 gap-1 h-full overflow-hidden">
+                    
+                    <!-- ECG (FC) -->
+                    <div class="bg-slate-800 rounded p-1 overflow-hidden min-h-0 relative">
+                        <div class="text-xs text-green-400 mb-1">ECG (FC)</div>
+                        <div class="waveform-container h-full relative">
+                            <canvas id="ecg-canvas" class="w-full h-full"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- Pleth (SpO2) -->
+                    <div class="bg-slate-800 rounded p-1 overflow-hidden min-h-0 relative">
+                        <div class="text-xs text-cyan-400 mb-1">Pleth (SpO₂)</div>
+                        <div class="waveform-container h-full relative">
+                            <canvas id="pleth-canvas" class="w-full h-full"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- Respiration (FR) -->
+                    <div class="bg-slate-800 rounded p-1 overflow-hidden min-h-0 relative">
+                        <div class="text-xs text-yellow-300 mb-1">Resp (FR)</div>
+                        <div class="waveform-container h-full relative">
+                            <canvas id="resp-canvas" class="w-full h-full"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Colonne Droite: Paramètres Vitaux -->
+                <div class="bg-slate-800 rounded p-2 h-full overflow-hidden flex flex-col justify-around">
+                    
+                    <!-- FC -->
+                    <div class="flex items-center justify-between p-2">
+                        <div class="flex items-center">
+                            <div class="w-6 h-6 mr-2 text-green-400 heart-beat">💚</div>
+                            <div>
+                                <span class="text-sm text-green-400 font-medium">FC</span>
+                                <span class="ml-1 text-xs text-green-400 opacity-80">bpm</span>
+                            </div>
+                        </div>
+                        <div id="fc-display" class="text-5xl font-bold text-green-400 vital-display">75</div>
+                    </div>
+                    
+                    <!-- SpO2 -->
+                    <div class="flex items-center justify-between p-2">
+                        <div class="flex items-center">
+                            <div class="w-6 h-6 mr-2 text-cyan-400">🌊</div>
+                            <div>
+                                <span class="text-sm text-cyan-400 font-medium">SpO₂</span>
+                                <span class="ml-1 text-xs text-cyan-400 opacity-80">%</span>
+                            </div>
+                        </div>
+                        <div id="spo2-display" class="text-5xl font-bold text-cyan-400 vital-display">98</div>
+                    </div>
+                    
+                    <!-- FR -->
+                    <div class="flex items-center justify-between p-2">
+                        <div class="flex items-center">
+                            <div class="w-6 h-6 mr-2 text-yellow-300">〰️</div>
+                            <div>
+                                <span class="text-sm text-yellow-300 font-medium">FR</span>
+                                <span class="ml-1 text-xs text-yellow-300 opacity-80">/min</span>
+                            </div>
+                        </div>
+                        <div id="fr-display" class="text-5xl font-bold text-yellow-300 vital-display">16</div>
+                    </div>
+                    
+                    <!-- PNI -->
+                    <div class="flex items-center justify-between p-2 pt-4">
+                        <div>
+                            <span class="text-sm text-lime-400 font-medium">PNI</span>
+                            <span class="ml-1 text-xs text-lime-400 opacity-80">mmHg</span>
+                        </div>
+                        <div class="text-4xl font-bold text-lime-400 vital-display">120/80</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Informations -->
+            <div class="absolute top-2 left-2 text-xs text-slate-600 font-mono">
+                Simulateur de Scope Médical v2.0 - Autonome
+            </div>
+            
+            <!-- Bouton contrôle -->
+            <button onclick="toggleControlMode()" 
+                    class="absolute top-2 right-2 text-xs bg-slate-800 text-slate-400 px-2 py-1 rounded hover:bg-slate-700">
+                📱 Interface de Contrôle
+            </button>
+            
+            <div class="absolute bottom-2 left-2 text-xs text-slate-700">
+                Cliquez sur "Interface de Contrôle" pour modifier les valeurs
+            </div>
+        </div>
+    </div>
+
+    <!-- Mode Contrôle -->
+    <div id="control-mode" class="w-full h-screen hidden">
+        <div class="min-h-screen bg-slate-900 text-white p-4">
+            <div class="max-w-md mx-auto">
+                <div class="text-center mb-6">
+                    <h1 class="text-2xl font-bold mb-2">📱 Contrôle à Distance</h1>
+                    <h2 class="text-lg text-slate-400">Simulateur de Scope Médical</h2>
+                </div>
+
+                <div class="space-y-4">
+                    <!-- FC -->
+                    <div class="bg-slate-700 rounded-lg p-4">
+                        <h3 class="text-green-400 text-lg font-semibold mb-3 flex items-center">
+                            💚 Fréquence Cardiaque (FC)
+                            <span id="fc-transitioning" class="ml-2 text-xs bg-yellow-600 px-2 py-1 rounded transition-indicator hidden">
+                                Transition...
+                            </span>
+                        </h3>
+                        <div class="grid grid-cols-2 gap-4 mb-3">
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">Actuelle</label>
+                                <div id="fc-current" class="text-2xl font-bold text-green-400">75 bpm</div>
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">Cible</label>
+                                <div id="fc-target" class="text-2xl font-bold text-green-400">75 bpm</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <input type="number" id="fc-input" min="0" max="300" 
+                                   class="flex-1 bg-slate-600 text-white px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+                                   placeholder="0-300">
+                            <button onclick="updateFC()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded font-medium">
+                                Appliquer
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- SpO2 -->
+                    <div class="bg-slate-700 rounded-lg p-4">
+                        <h3 class="text-cyan-400 text-lg font-semibold mb-3 flex items-center">
+                            💙 Saturation en Oxygène (SpO₂)
+                            <span id="spo2-transitioning" class="ml-2 text-xs bg-yellow-600 px-2 py-1 rounded transition-indicator hidden">
+                                Transition...
+                            </span>
+                        </h3>
+                        <div class="grid grid-cols-2 gap-4 mb-3">
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">Actuelle</label>
+                                <div id="spo2-current" class="text-2xl font-bold text-cyan-400">98%</div>
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">Cible</label>
+                                <div id="spo2-target" class="text-2xl font-bold text-cyan-400">98%</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <input type="number" id="spo2-input" min="0" max="100" 
+                                   class="flex-1 bg-slate-600 text-white px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                                   placeholder="0-100">
+                            <button onclick="updateSpO2()" class="bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded font-medium">
+                                Appliquer
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- FR -->
+                    <div class="bg-slate-700 rounded-lg p-4">
+                        <h3 class="text-yellow-300 text-lg font-semibold mb-3 flex items-center">
+                            💛 Fréquence Respiratoire (FR)
+                            <span id="fr-transitioning" class="ml-2 text-xs bg-yellow-600 px-2 py-1 rounded transition-indicator hidden">
+                                Transition...
+                            </span>
+                        </h3>
+                        <div class="grid grid-cols-2 gap-4 mb-3">
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">Actuelle</label>
+                                <div id="fr-current" class="text-2xl font-bold text-yellow-300">16 /min</div>
+                            </div>
+                            <div>
+                                <label class="block text-xs text-slate-400 mb-1">Cible</label>
+                                <div id="fr-target" class="text-2xl font-bold text-yellow-300">16 /min</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <input type="number" id="fr-input" min="0" max="60" 
+                                   class="flex-1 bg-slate-600 text-white px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-yellow-500"
+                                   placeholder="0-60">
+                            <button onclick="updateFR()" class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded font-medium">
+                                Appliquer
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6 p-4 bg-slate-800 rounded-lg">
+                    <h3 class="text-sm font-semibold mb-2">📚 Instructions</h3>
+                    <ul class="text-xs text-slate-400 space-y-1">
+                        <li>• Entrez la nouvelle valeur cible</li>
+                        <li>• Les valeurs changent de façon réaliste</li>
+                        <li>• Transitions: FC ±2/s, SpO₂ ±1/s, FR ±1/s</li>
+                        <li>• Retournez à l'interface scope pour voir les changements</li>
+                    </ul>
+                </div>
+
+                <div class="mt-4 flex space-x-2">
+                    <button onclick="toggleControlMode()" 
+                            class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-medium">
+                        🎯 Retour au Scope
+                    </button>
+                    <button onclick="resetValues()" 
+                            class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded font-medium">
+                        🔄 Reset
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // État des signes vitaux
+        let vitalSigns = {
+            current: { fc: 75, spo2: 98, fr: 16 },
+            target: { fc: 75, spo2: 98, fr: 16 },
+            transitioning: { fc: false, spo2: false, fr: false }
+        };
+
+        // Variables pour les tracés
+        let ecgCanvas, plethCanvas, respCanvas;
+        let ecgCtx, plethCtx, respCtx;
+        let time = 0;
+
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', function() {
+            initCanvases();
+            startTransitionTimer();
+            startWaveforms();
+            updateDisplay();
+        });
+
+        function initCanvases() {
+            ecgCanvas = document.getElementById('ecg-canvas');
+            plethCanvas = document.getElementById('pleth-canvas');
+            respCanvas = document.getElementById('resp-canvas');
+            
+            ecgCtx = ecgCanvas.getContext('2d');
+            plethCtx = plethCanvas.getContext('2d');
+            respCtx = respCanvas.getContext('2d');
+            
+            // Ajuster la taille des canvas
+            function resizeCanvas(canvas) {
+                const rect = canvas.getBoundingClientRect();
+                canvas.width = rect.width;
+                canvas.height = rect.height;
+            }
+            
+            resizeCanvas(ecgCanvas);
+            resizeCanvas(plethCanvas);
+            resizeCanvas(respCanvas);
+        }
+
+        function startTransitionTimer() {
+            setInterval(() => {
+                let changed = false;
+                const current = vitalSigns.current;
+                const target = vitalSigns.target;
+                const transitioning = vitalSigns.transitioning;
+
+                // Transition FC (2 bpm/s)
+                if (current.fc !== target.fc) {
+                    const diff = target.fc - current.fc;
+                    const step = Math.min(Math.abs(diff), 2) * (diff > 0 ? 1 : -1);
+                    current.fc += step;
+                    transitioning.fc = current.fc !== target.fc;
+                    changed = true;
+                } else {
+                    transitioning.fc = false;
+                }
+
+                // Transition SpO2 (1%/s)
+                if (current.spo2 !== target.spo2) {
+                    const diff = target.spo2 - current.spo2;
+                    const step = Math.min(Math.abs(diff), 1) * (diff > 0 ? 1 : -1);
+                    current.spo2 += step;
+                    transitioning.spo2 = current.spo2 !== target.spo2;
+                    changed = true;
+                } else {
+                    transitioning.spo2 = false;
+                }
+
+                // Transition FR (1/min/s)
+                if (current.fr !== target.fr) {
+                    const diff = target.fr - current.fr;
+                    const step = Math.min(Math.abs(diff), 1) * (diff > 0 ? 1 : -1);
+                    current.fr += step;
+                    transitioning.fr = current.fr !== target.fr;
+                    changed = true;
+                } else {
+                    transitioning.fr = false;
+                }
+
+                if (changed) {
+                    updateDisplay();
+                }
+            }, 1000); // Chaque seconde
+        }
+
+        function startWaveforms() {
+            function animate() {
+                time += 0.02;
+                
+                drawECG();
+                drawPleth();
+                drawResp();
+                
+                requestAnimationFrame(animate);
+            }
+            animate();
+        }
+
+        function drawECG() {
+            const canvas = ecgCanvas;
+            const ctx = ecgCtx;
+            const fc = vitalSigns.current.fc;
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            if (fc === 0) {
+                // Ligne plate
+                ctx.strokeStyle = '#10b981';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(0, canvas.height / 2);
+                ctx.lineTo(canvas.width, canvas.height / 2);
+                ctx.stroke();
+                return;
+            }
+
+            const frequency = fc / 60; // Hz
+            const amplitude = canvas.height * 0.3;
+            const centerY = canvas.height / 2;
+            
+            ctx.strokeStyle = '#10b981';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            
+            for (let x = 0; x < canvas.width; x++) {
+                const t = (x / canvas.width * 4 + time) * frequency * 2 * Math.PI;
+                
+                // Pattern ECG simplifié
+                let y = 0;
+                const phase = t % (2 * Math.PI);
+                
+                if (phase < 0.2) {
+                    // QRS complex
+                    y = Math.sin(phase * 25) * amplitude;
+                } else if (phase < 1.0) {
+                    // T wave
+                    y = Math.sin((phase - 0.2) * 4) * amplitude * 0.3;
+                }
+                
+                if (x === 0) {
+                    ctx.moveTo(x, centerY - y);
+                } else {
+                    ctx.lineTo(x, centerY - y);
+                }
+            }
+            
+            ctx.stroke();
+        }
+
+        function drawPleth() {
+            const canvas = plethCanvas;
+            const ctx = plethCtx;
+            const fc = vitalSigns.current.fc;
+            const spo2 = vitalSigns.current.spo2;
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            if (fc === 0 || spo2 === 0) {
+                // Ligne plate
+                ctx.strokeStyle = '#06b6d4';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(0, canvas.height / 2);
+                ctx.lineTo(canvas.width, canvas.height / 2);
+                ctx.stroke();
+                return;
+            }
+
+            const frequency = fc / 60;
+            const amplitude = canvas.height * 0.4 * (spo2 / 100);
+            const centerY = canvas.height * 0.7;
+            
+            ctx.strokeStyle = '#06b6d4';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            
+            for (let x = 0; x < canvas.width; x++) {
+                const t = (x / canvas.width * 4 + time) * frequency * 2 * Math.PI;
+                const y = Math.sin(t) * amplitude;
+                
+                if (x === 0) {
+                    ctx.moveTo(x, centerY - y);
+                } else {
+                    ctx.lineTo(x, centerY - y);
+                }
+            }
+            
+            ctx.stroke();
+        }
+
+        function drawResp() {
+            const canvas = respCanvas;
+            const ctx = respCtx;
+            const fr = vitalSigns.current.fr;
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            if (fr === 0) {
+                // Ligne plate
+                ctx.strokeStyle = '#fde047';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(0, canvas.height / 2);
+                ctx.lineTo(canvas.width, canvas.height / 2);
+                ctx.stroke();
+                return;
+            }
+
+            const frequency = fr / 60;
+            const amplitude = canvas.height * 0.3;
+            const centerY = canvas.height / 2;
+            
+            ctx.strokeStyle = '#fde047';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            
+            for (let x = 0; x < canvas.width; x++) {
+                const t = (x / canvas.width * 8 + time) * frequency * 2 * Math.PI;
+                const y = Math.sin(t) * amplitude;
+                
+                if (x === 0) {
+                    ctx.moveTo(x, centerY - y);
+                } else {
+                    ctx.lineTo(x, centerY - y);
+                }
+            }
+            
+            ctx.stroke();
+        }
+
+        function updateDisplay() {
+            const current = vitalSigns.current;
+            const target = vitalSigns.target;
+            const transitioning = vitalSigns.transitioning;
+            
+            // Mise à jour interface scope
+            document.getElementById('fc-display').textContent = current.fc;
+            document.getElementById('spo2-display').textContent = current.spo2;
+            document.getElementById('fr-display').textContent = current.fr;
+            
+            // Mise à jour interface contrôle
+            document.getElementById('fc-current').textContent = current.fc + ' bpm';
+            document.getElementById('fc-target').textContent = target.fc + ' bpm';
+            document.getElementById('fc-transitioning').classList.toggle('hidden', !transitioning.fc);
+            
+            document.getElementById('spo2-current').textContent = current.spo2 + '%';
+            document.getElementById('spo2-target').textContent = target.spo2 + '%';
+            document.getElementById('spo2-transitioning').classList.toggle('hidden', !transitioning.spo2);
+            
+            document.getElementById('fr-current').textContent = current.fr + ' /min';
+            document.getElementById('fr-target').textContent = target.fr + ' /min';
+            document.getElementById('fr-transitioning').classList.toggle('hidden', !transitioning.fr);
+        }
+
+        function toggleControlMode() {
+            const scopeMode = document.getElementById('scope-mode');
+            const controlMode = document.getElementById('control-mode');
+            
+            if (scopeMode.classList.contains('hidden')) {
+                scopeMode.classList.remove('hidden');
+                controlMode.classList.add('hidden');
+                // Réinitialiser les canvas
+                setTimeout(initCanvases, 100);
+            } else {
+                scopeMode.classList.add('hidden');
+                controlMode.classList.remove('hidden');
+            }
+        }
+
+        function updateFC() {
+            const value = parseInt(document.getElementById('fc-input').value);
+            if (value >= 0 && value <= 300) {
+                vitalSigns.target.fc = value;
+                document.getElementById('fc-input').value = '';
+                updateDisplay();
+            } else {
+                alert('Valeur FC invalide (0-300)');
+            }
+        }
+
+        function updateSpO2() {
+            const value = parseInt(document.getElementById('spo2-input').value);
+            if (value >= 0 && value <= 100) {
+                vitalSigns.target.spo2 = value;
+                document.getElementById('spo2-input').value = '';
+                updateDisplay();
+            } else {
+                alert('Valeur SpO₂ invalide (0-100)');
+            }
+        }
+
+        function updateFR() {
+            const value = parseInt(document.getElementById('fr-input').value);
+            if (value >= 0 && value <= 60) {
+                vitalSigns.target.fr = value;
+                document.getElementById('fr-input').value = '';
+                updateDisplay();
+            } else {
+                alert('Valeur FR invalide (0-60)');
+            }
+        }
+
+        function resetValues() {
+            vitalSigns.target = { fc: 75, spo2: 98, fr: 16 };
+            updateDisplay();
+        }
+
+        // Gestion des touches Entrée
+        document.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                if (e.target.id === 'fc-input') updateFC();
+                else if (e.target.id === 'spo2-input') updateSpO2();
+                else if (e.target.id === 'fr-input') updateFR();
+            }
+        });
+
+        // Redimensionnement des canvas
+        window.addEventListener('resize', function() {
+            if (!document.getElementById('scope-mode').classList.contains('hidden')) {
+                setTimeout(initCanvases, 100);
+            }
+        });
+    </script>
+</body>
+</html>
