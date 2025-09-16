@@ -137,132 +137,9 @@
             </div>
             
             <!-- Bouton contrôle -->
-            <button onclick="toggleControlMode()" 
-                    class="absolute top-2 right-2 text-xs bg-slate-800 text-slate-400 px-2 py-1 rounded hover:bg-slate-700">
-                📱 Interface de Contrôle
-            </button>
-            
-            <div class="absolute bottom-2 left-2 text-xs text-slate-700">
-                Cliquez sur "Interface de Contrôle" pour modifier les valeurs
-            </div>
         </div>
     </div>
 
-    <!-- Mode Contrôle -->
-    <div id="control-mode" class="w-full h-screen hidden">
-        <div class="min-h-screen bg-slate-900 text-white p-4">
-            <div class="max-w-md mx-auto">
-                <div class="text-center mb-6">
-                    <h1 class="text-2xl font-bold mb-2">📱 Contrôle à Distance</h1>
-                    <h2 class="text-lg text-slate-400">Simulateur de Scope Médical</h2>
-                </div>
-
-                <div class="space-y-4">
-                    <!-- FC -->
-                    <div class="bg-slate-700 rounded-lg p-4">
-                        <h3 class="text-green-400 text-lg font-semibold mb-3 flex items-center">
-                            💚 Fréquence Cardiaque (FC)
-                            <span id="fc-transitioning" class="ml-2 text-xs bg-yellow-600 px-2 py-1 rounded transition-indicator hidden">
-                                Transition...
-                            </span>
-                        </h3>
-                        <div class="grid grid-cols-2 gap-4 mb-3">
-                            <div>
-                                <label class="block text-xs text-slate-400 mb-1">Actuelle</label>
-                                <div id="fc-current" class="text-2xl font-bold text-green-400">140 bpm</div>
-                            </div>
-                            <div>
-                                <label class="block text-xs text-slate-400 mb-1">Cible</label>
-                                <div id="fc-target" class="text-2xl font-bold text-green-400">140 bpm</div>
-                            </div>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <input type="number" id="fc-input" min="0" max="300"
-                                   class="flex-1 bg-slate-600 text-white px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-green-500">
-                            <button onclick="updateFC()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded font-medium">
-                                Appliquer
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- SpO2 -->
-                    <div class="bg-slate-700 rounded-lg p-4">
-                        <h3 class="text-cyan-400 text-lg font-semibold mb-3 flex items-center">
-                            💙 Saturation en Oxygène (SpO₂)
-                            <span id="spo2-transitioning" class="ml-2 text-xs bg-yellow-600 px-2 py-1 rounded transition-indicator hidden">
-                                Transition...
-                            </span>
-                        </h3>
-                        <div class="grid grid-cols-2 gap-4 mb-3">
-                            <div>
-                                <label class="block text-xs text-slate-400 mb-1">Actuelle</label>
-                                <div id="spo2-current" class="text-2xl font-bold text-cyan-400">98%</div>
-                            </div>
-                            <div>
-                                <label class="block text-xs text-slate-400 mb-1">Cible</label>
-                                <div id="spo2-target" class="text-2xl font-bold text-cyan-400">98%</div>
-                            </div>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <input type="number" id="spo2-input" min="0" max="100"
-                                   class="flex-1 bg-slate-600 text-white px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-cyan-500">
-                            <button onclick="updateSpO2()" class="bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded font-medium">
-                                Appliquer
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- FR -->
-                    <div class="bg-slate-700 rounded-lg p-4">
-                        <h3 class="text-yellow-300 text-lg font-semibold mb-3 flex items-center">
-                            💛 Fréquence Respiratoire (FR)
-                            <span id="fr-transitioning" class="ml-2 text-xs bg-yellow-600 px-2 py-1 rounded transition-indicator hidden">
-                                Transition...
-                            </span>
-                        </h3>
-                        <div class="grid grid-cols-2 gap-4 mb-3">
-                            <div>
-                                <label class="block text-xs text-slate-400 mb-1">Actuelle</label>
-                                <div id="fr-current" class="text-2xl font-bold text-yellow-300">50 /min</div>
-                            </div>
-                            <div>
-                                <label class="block text-xs text-slate-400 mb-1">Cible</label>
-                                <div id="fr-target" class="text-2xl font-bold text-yellow-300">50 /min</div>
-                            </div>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <input type="number" id="fr-input" min="0" max="60"
-                                   class="flex-1 bg-slate-600 text-white px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-yellow-500">
-                            <button onclick="updateFR()" class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded font-medium">
-                                Appliquer
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="mt-6 p-4 bg-slate-800 rounded-lg">
-                    <h3 class="text-sm font-semibold mb-2">📚 Instructions</h3>
-                    <ul class="text-xs text-slate-400 space-y-1">
-                        <li>• Entrez la nouvelle valeur cible</li>
-                        <li>• Les valeurs changent de façon réaliste</li>
-                        <li>• Transitions: FC ±2/s, SpO₂ ±1/s, FR ±1/s</li>
-                        <li>• Retournez à l'interface scope pour voir les changements</li>
-                    </ul>
-                </div>
-
-                <div class="mt-4 flex space-x-2">
-                    <button onclick="toggleControlMode()" 
-                            class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-medium">
-                        🎯 Retour au Scope
-                    </button>
-                    <button onclick="resetValues()" 
-                            class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded font-medium">
-                        🔄 Reset
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <script>
         // État des signes vitaux
@@ -522,77 +399,14 @@
             document.getElementById('fr-target').textContent = target.fr + ' /min';
             document.getElementById('fr-transitioning').classList.toggle('hidden', !transitioning.fr);
 
-            // Mise à jour des placeholders des inputs avec les valeurs actuelles
-            const fcInput = document.getElementById('fc-input');
-            const spo2Input = document.getElementById('spo2-input');
-            const frInput = document.getElementById('fr-input');
-
-            if (fcInput) fcInput.placeholder = target.fc + ' bpm';
-            if (spo2Input) spo2Input.placeholder = target.spo2 + '%';
-            if (frInput) frInput.placeholder = target.fr + ' /min';
         }
 
-        function toggleControlMode() {
-            const scopeMode = document.getElementById('scope-mode');
-            const controlMode = document.getElementById('control-mode');
-            
-            if (scopeMode.classList.contains('hidden')) {
-                scopeMode.classList.remove('hidden');
-                controlMode.classList.add('hidden');
-                // Réinitialiser les canvas
-                setTimeout(initCanvases, 100);
-            } else {
-                scopeMode.classList.add('hidden');
-                controlMode.classList.remove('hidden');
-            }
-        }
-
-        function updateFC() {
-            const value = parseInt(document.getElementById('fc-input').value);
-            if (value >= 0 && value <= 300) {
-                vitalSigns.target.fc = value;
-                document.getElementById('fc-input').value = '';
-                updateDisplay();
-            } else {
-                alert('Valeur FC invalide (0-300)');
-            }
-        }
-
-        function updateSpO2() {
-            const value = parseInt(document.getElementById('spo2-input').value);
-            if (value >= 0 && value <= 100) {
-                vitalSigns.target.spo2 = value;
-                document.getElementById('spo2-input').value = '';
-                updateDisplay();
-            } else {
-                alert('Valeur SpO₂ invalide (0-100)');
-            }
-        }
-
-        function updateFR() {
-            const value = parseInt(document.getElementById('fr-input').value);
-            if (value >= 0 && value <= 60) {
-                vitalSigns.target.fr = value;
-                document.getElementById('fr-input').value = '';
-                updateDisplay();
-            } else {
-                alert('Valeur FR invalide (0-60)');
-            }
-        }
 
         function resetValues() {
             vitalSigns.target = { fc: 140, spo2: 98, fr: 50 };
             updateDisplay();
         }
 
-        // Gestion des touches Entrée
-        document.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                if (e.target.id === 'fc-input') updateFC();
-                else if (e.target.id === 'spo2-input') updateSpO2();
-                else if (e.target.id === 'fr-input') updateFR();
-            }
-        });
 
         // Redimensionnement des canvas
         window.addEventListener('resize', function() {
