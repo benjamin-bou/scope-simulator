@@ -9,7 +9,8 @@
       "Bash(timeout 3 curl -I http://localhost:3000)",
       "Bash(python:*)",
       "Bash(timeout:*)",
-      "Bash(cmd /c:*)"
+      "Bash(cmd /c:*)",
+      "Bash(npm start)"
     ],
     "deny": [],
     "ask": []

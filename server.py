@@ -30,8 +30,8 @@ SERVER_IP = "0.0.0.0"
 
 # État des signes vitaux
 vitals = {
-    'current': {'fc': 120, 'spo2': 98, 'fr': 50},
-    'target': {'fc': 120, 'spo2': 98, 'fr': 50},
+    'current': {'fc': 140, 'spo2': 98, 'fr': 50},
+    'target': {'fc': 140, 'spo2': 98, 'fr': 50},
     'mobile_connected': False,
     'last_mobile_ping': 0
 }
@@ -150,7 +150,7 @@ class ScopeHandler(SimpleHTTPRequestHandler):
                     <div class="flex items-center">
                         <div><span class="text-green-400 font-bold text-2xl">FC</span><span class="text-lg text-green-400 opacity-80 ml-3">bpm</span></div>
                     </div>
-                    <div id="fc-display" class="text-7xl font-bold text-green-400 vital-display">120</div>
+                    <div id="fc-display" class="text-7xl font-bold text-green-400 vital-display">140</div>
                 </div>
                 
                 <div class="flex items-center justify-between py-6">
@@ -345,7 +345,7 @@ class ScopeHandler(SimpleHTTPRequestHandler):
         }
         
         // Variables pour détecter les changements de valeurs
-        let lastFC = 120;
+        let lastFC = 140;
         let lastSpO2 = 98;
         let lastFR = 50;
         
@@ -414,7 +414,7 @@ class ScopeHandler(SimpleHTTPRequestHandler):
             drawScopeWaveform('resp-canvas', respBuffer, '#eab308', [-0.6, 0.6]);
         }
         
-        let vitals = {current: {fc: 120, spo2: 98, fr: 50}};
+        let vitals = {current: {fc: 140, spo2: 98, fr: 50}};
         
         function updateDisplay() {
             fetch('/api/vitals')
@@ -485,18 +485,22 @@ class ScopeHandler(SimpleHTTPRequestHandler):
                 <div class="flex justify-between items-center mb-2">
                     <h3 class="text-green-400 text-lg font-semibold">FC (bpm)</h3>
                     <div class="flex space-x-4">
-                        <div class="text-center"><label class="text-xs text-slate-400">Actuelle</label><div id="fc-current" class="text-lg text-green-400 font-bold">120</div></div>
-                        <div class="text-center"><label class="text-xs text-slate-400">Cible</label><div id="fc-target" class="text-lg text-green-400 font-bold">120</div></div>
+                        <div class="text-center"><label class="text-xs text-slate-400">Actuelle</label><div id="fc-current" class="text-lg text-green-400 font-bold">140</div></div>
+                        <div class="text-center"><label class="text-xs text-slate-400">Cible</label><div id="fc-target" class="text-lg text-green-400 font-bold">140</div></div>
                     </div>
                 </div>
-                <div class="grid grid-cols-4 gap-1 mb-2">
-                    <button class="bg-green-700 hover:bg-green-600 text-white py-1 rounded text-sm font-medium">50</button>
-                    <button class="bg-green-700 hover:bg-green-600 text-white py-1 rounded text-sm font-medium">70</button>
-                    <button class="bg-green-700 hover:bg-green-600 text-white py-1 rounded text-sm font-medium">90</button>
-                    <button class="bg-green-700 hover:bg-green-600 text-white py-1 rounded text-sm font-medium">120</button>
+                <div class="grid grid-cols-3 gap-1 mb-2">
+                    <button onclick="sendUpdate({fc: 50})" class="bg-green-700 hover:bg-green-600 text-white py-1 rounded text-sm font-medium">50</button>
+                    <button onclick="sendUpdate({fc: 70})" class="bg-green-700 hover:bg-green-600 text-white py-1 rounded text-sm font-medium">70</button>
+                    <button onclick="sendUpdate({fc: 80})" class="bg-green-700 hover:bg-green-600 text-white py-1 rounded text-sm font-medium">80</button>
+                </div>
+                <div class="grid grid-cols-3 gap-1 mb-2">
+                    <button onclick="sendUpdate({fc: 90})" class="bg-green-700 hover:bg-green-600 text-white py-1 rounded text-sm font-medium">90</button>
+                    <button onclick="sendUpdate({fc: 110})" class="bg-green-700 hover:bg-green-600 text-white py-1 rounded text-sm font-medium">110</button>
+                    <button onclick="sendUpdate({fc: 130})" class="bg-green-700 hover:bg-green-600 text-white py-1 rounded text-sm font-medium">130</button>
                 </div>
                 <div class="flex space-x-2">
-                    <input type="number" id="fc-input" min="0" max="300" class="flex-1 bg-slate-700 text-white px-3 py-2 rounded" placeholder="120" onkeypress="if(event.key==='Enter')updateFC()">
+                    <input type="number" id="fc-input" min="0" max="300" class="flex-1 bg-slate-700 text-white px-3 py-2 rounded" onkeypress="if(event.key==='Enter')updateFC()">
                     <button onclick="updateFC()" class="bg-green-600 px-4 py-2 rounded font-bold">OK</button>
                 </div>
             </div>
@@ -509,15 +513,18 @@ class ScopeHandler(SimpleHTTPRequestHandler):
                         <div class="text-center"><label class="text-xs text-slate-400">Cible</label><div id="spo2-target" class="text-lg text-cyan-400 font-bold">98</div></div>
                     </div>
                 </div>
-                <div class="grid grid-cols-5 gap-1 mb-2">
-                    <button class="bg-cyan-700 hover:bg-cyan-600 text-white py-1 rounded text-sm font-medium">60</button>
-                    <button class="bg-cyan-700 hover:bg-cyan-600 text-white py-1 rounded text-sm font-medium">70</button>
-                    <button class="bg-cyan-700 hover:bg-cyan-600 text-white py-1 rounded text-sm font-medium">80</button>
-                    <button class="bg-cyan-700 hover:bg-cyan-600 text-white py-1 rounded text-sm font-medium">90</button>
-                    <button class="bg-cyan-700 hover:bg-cyan-600 text-white py-1 rounded text-sm font-medium">100</button>
+                <div class="grid grid-cols-3 gap-1 mb-2">
+                    <button onclick="sendUpdate({spo2: 55})" class="bg-cyan-700 hover:bg-cyan-600 text-white py-1 rounded text-sm font-medium">55</button>
+                    <button onclick="sendUpdate({spo2: 65})" class="bg-cyan-700 hover:bg-cyan-600 text-white py-1 rounded text-sm font-medium">65</button>
+                    <button onclick="sendUpdate({spo2: 75})" class="bg-cyan-700 hover:bg-cyan-600 text-white py-1 rounded text-sm font-medium">75</button>
+                </div>
+                <div class="grid grid-cols-3 gap-1 mb-2">
+                    <button onclick="sendUpdate({spo2: 86})" class="bg-cyan-700 hover:bg-cyan-600 text-white py-1 rounded text-sm font-medium">86</button>
+                    <button onclick="sendUpdate({spo2: 95})" class="bg-cyan-700 hover:bg-cyan-600 text-white py-1 rounded text-sm font-medium">95</button>
+                    <button onclick="sendUpdate({spo2: 100})" class="bg-cyan-700 hover:bg-cyan-600 text-white py-1 rounded text-sm font-medium">100</button>
                 </div>
                 <div class="flex space-x-2">
-                    <input type="number" id="spo2-input" min="0" max="100" class="flex-1 bg-slate-700 text-white px-3 py-2 rounded" placeholder="98" onkeypress="if(event.key==='Enter')updateSpO2()">
+                    <input type="number" id="spo2-input" min="0" max="100" class="flex-1 bg-slate-700 text-white px-3 py-2 rounded" onkeypress="if(event.key==='Enter')updateSpO2()">
                     <button onclick="updateSpO2()" class="bg-cyan-600 px-4 py-2 rounded font-bold">OK</button>
                 </div>
             </div>
@@ -530,15 +537,18 @@ class ScopeHandler(SimpleHTTPRequestHandler):
                         <div class="text-center"><label class="text-xs text-slate-400">Cible</label><div id="fr-target" class="text-lg text-yellow-300 font-bold">50</div></div>
                     </div>
                 </div>
-                <div class="grid grid-cols-5 gap-1 mb-2">
-                    <button class="bg-yellow-700 hover:bg-yellow-600 text-white py-1 rounded text-sm font-medium">20</button>
-                    <button class="bg-yellow-700 hover:bg-yellow-600 text-white py-1 rounded text-sm font-medium">30</button>
-                    <button class="bg-yellow-700 hover:bg-yellow-600 text-white py-1 rounded text-sm font-medium">40</button>
-                    <button class="bg-yellow-700 hover:bg-yellow-600 text-white py-1 rounded text-sm font-medium">50</button>
-                    <button class="bg-yellow-700 hover:bg-yellow-600 text-white py-1 rounded text-sm font-medium">60</button>
+                <div class="grid grid-cols-3 gap-1 mb-2">
+                    <button onclick="sendUpdate({fr: 0})" class="bg-yellow-700 hover:bg-yellow-600 text-white py-1 rounded text-sm font-medium">0</button>
+                    <button onclick="sendUpdate({fr: 20})" class="bg-yellow-700 hover:bg-yellow-600 text-white py-1 rounded text-sm font-medium">20</button>
+                    <button onclick="sendUpdate({fr: 30})" class="bg-yellow-700 hover:bg-yellow-600 text-white py-1 rounded text-sm font-medium">30</button>
+                </div>
+                <div class="grid grid-cols-3 gap-1 mb-2">
+                    <button onclick="sendUpdate({fr: 40})" class="bg-yellow-700 hover:bg-yellow-600 text-white py-1 rounded text-sm font-medium">40</button>
+                    <button onclick="sendUpdate({fr: 50})" class="bg-yellow-700 hover:bg-yellow-600 text-white py-1 rounded text-sm font-medium">50</button>
+                    <button onclick="sendUpdate({fr: 60})" class="bg-yellow-700 hover:bg-yellow-600 text-white py-1 rounded text-sm font-medium">60</button>
                 </div>
                 <div class="flex space-x-2">
-                    <input type="number" id="fr-input" min="0" max="60" class="flex-1 bg-slate-700 text-white px-3 py-2 rounded" placeholder="50" onkeypress="if(event.key==='Enter')updateFR()">
+                    <input type="number" id="fr-input" min="0" max="60" class="flex-1 bg-slate-700 text-white px-3 py-2 rounded" onkeypress="if(event.key==='Enter')updateFR()">
                     <button onclick="updateFR()" class="bg-yellow-600 px-4 py-2 rounded font-bold">OK</button>
                 </div>
             </div>
@@ -560,6 +570,15 @@ class ScopeHandler(SimpleHTTPRequestHandler):
                     document.getElementById('spo2-target').textContent = data.target.spo2;
                     document.getElementById('fr-current').textContent = data.current.fr;
                     document.getElementById('fr-target').textContent = data.target.fr;
+
+                    // Mise à jour des placeholders avec les valeurs actuelles
+                    const fcInput = document.getElementById('fc-input');
+                    const spo2Input = document.getElementById('spo2-input');
+                    const frInput = document.getElementById('fr-input');
+
+                    if (fcInput) fcInput.placeholder = data.target.fc + ' bpm';
+                    if (spo2Input) spo2Input.placeholder = data.target.spo2 + '%';
+                    if (frInput) frInput.placeholder = data.target.fr + ' /min';
                 });
         }
         
@@ -595,7 +614,7 @@ class ScopeHandler(SimpleHTTPRequestHandler):
             }
         }
         
-        function reset() { sendUpdate({fc: 120, spo2: 98, fr: 50}); }
+        function reset() { sendUpdate({fc: 140, spo2: 98, fr: 50}); }
         
         setInterval(updateDisplay, 1000);
         updateDisplay();
@@ -621,32 +640,30 @@ def transition_worker():
         current = vitals['current']
         target = vitals['target']
         
-        # FC: Vitesse proportionnelle à l'écart
+        # FC: Transition en 10 secondes
         if current['fc'] != target['fc']:
             diff = target['fc'] - current['fc']
-            # Vitesse = 20% de l'écart par seconde (minimum 1, maximum 20)
-            speed_per_second = max(1, min(20, abs(diff) * 0.2))
-            step_per_100ms = speed_per_second / 10  # Divisé par 10 car on exécute 10x/s
-            step = max(1, round(step_per_100ms)) * (1 if diff > 0 else -1)
-            current['fc'] += step
+            # Pour atteindre la cible en 10 secondes avec 100 étapes (10x/s * 10s)
+            step = diff / 100.0
+            if abs(step) < 1:
+                step = 1 if diff > 0 else -1
+            current['fc'] = int(min(max(0, current['fc'] + step), 300))
         
-        # SpO2: Vitesse proportionnelle à l'écart  
+        # SpO2: Transition en 10 secondes
         if current['spo2'] != target['spo2']:
             diff = target['spo2'] - current['spo2']
-            # Vitesse = 15% de l'écart par seconde (minimum 1, maximum 10)
-            speed_per_second = max(1, min(10, abs(diff) * 0.15))
-            step_per_100ms = speed_per_second / 10
-            step = max(1, round(step_per_100ms)) * (1 if diff > 0 else -1)
-            current['spo2'] += step
+            step = diff / 100.0
+            if abs(step) < 1:
+                step = 1 if diff > 0 else -1
+            current['spo2'] = int(min(max(0, current['spo2'] + step), 100))
         
-        # FR: Vitesse proportionnelle à l'écart
+        # FR: Transition en 10 secondes
         if current['fr'] != target['fr']:
             diff = target['fr'] - current['fr']
-            # Vitesse = 25% de l'écart par seconde (minimum 1, maximum 15)
-            speed_per_second = max(1, min(15, abs(diff) * 0.25))
-            step_per_100ms = speed_per_second / 10
-            step = max(1, round(step_per_100ms)) * (1 if diff > 0 else -1)
-            current['fr'] += step
+            step = diff / 100.0
+            if abs(step) < 1:
+                step = 1 if diff > 0 else -1
+            current['fr'] = int(min(max(0, current['fr'] + step), 60))
 
 if __name__ == "__main__":
     print("Simulateur de Scope Medical v2.0")

@@ -93,7 +93,7 @@
                                 <span class="ml-1 text-xs text-green-400 opacity-80">bpm</span>
                             </div>
                         </div>
-                        <div id="fc-display" class="text-5xl font-bold text-green-400 vital-display">75</div>
+                        <div id="fc-display" class="text-5xl font-bold text-green-400 vital-display">140</div>
                     </div>
                     
                     <!-- SpO2 -->
@@ -117,7 +117,7 @@
                                 <span class="ml-1 text-xs text-yellow-300 opacity-80">/min</span>
                             </div>
                         </div>
-                        <div id="fr-display" class="text-5xl font-bold text-yellow-300 vital-display">16</div>
+                        <div id="fr-display" class="text-5xl font-bold text-yellow-300 vital-display">50</div>
                     </div>
                     
                     <!-- PNI -->
@@ -169,17 +169,16 @@
                         <div class="grid grid-cols-2 gap-4 mb-3">
                             <div>
                                 <label class="block text-xs text-slate-400 mb-1">Actuelle</label>
-                                <div id="fc-current" class="text-2xl font-bold text-green-400">75 bpm</div>
+                                <div id="fc-current" class="text-2xl font-bold text-green-400">140 bpm</div>
                             </div>
                             <div>
                                 <label class="block text-xs text-slate-400 mb-1">Cible</label>
-                                <div id="fc-target" class="text-2xl font-bold text-green-400">75 bpm</div>
+                                <div id="fc-target" class="text-2xl font-bold text-green-400">140 bpm</div>
                             </div>
                         </div>
                         <div class="flex items-center space-x-2">
-                            <input type="number" id="fc-input" min="0" max="300" 
-                                   class="flex-1 bg-slate-600 text-white px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
-                                   placeholder="0-300">
+                            <input type="number" id="fc-input" min="0" max="300"
+                                   class="flex-1 bg-slate-600 text-white px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-green-500">
                             <button onclick="updateFC()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded font-medium">
                                 Appliquer
                             </button>
@@ -205,9 +204,8 @@
                             </div>
                         </div>
                         <div class="flex items-center space-x-2">
-                            <input type="number" id="spo2-input" min="0" max="100" 
-                                   class="flex-1 bg-slate-600 text-white px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-cyan-500"
-                                   placeholder="0-100">
+                            <input type="number" id="spo2-input" min="0" max="100"
+                                   class="flex-1 bg-slate-600 text-white px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-cyan-500">
                             <button onclick="updateSpO2()" class="bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded font-medium">
                                 Appliquer
                             </button>
@@ -225,17 +223,16 @@
                         <div class="grid grid-cols-2 gap-4 mb-3">
                             <div>
                                 <label class="block text-xs text-slate-400 mb-1">Actuelle</label>
-                                <div id="fr-current" class="text-2xl font-bold text-yellow-300">16 /min</div>
+                                <div id="fr-current" class="text-2xl font-bold text-yellow-300">50 /min</div>
                             </div>
                             <div>
                                 <label class="block text-xs text-slate-400 mb-1">Cible</label>
-                                <div id="fr-target" class="text-2xl font-bold text-yellow-300">16 /min</div>
+                                <div id="fr-target" class="text-2xl font-bold text-yellow-300">50 /min</div>
                             </div>
                         </div>
                         <div class="flex items-center space-x-2">
-                            <input type="number" id="fr-input" min="0" max="60" 
-                                   class="flex-1 bg-slate-600 text-white px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                                   placeholder="0-60">
+                            <input type="number" id="fr-input" min="0" max="60"
+                                   class="flex-1 bg-slate-600 text-white px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-yellow-500">
                             <button onclick="updateFR()" class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded font-medium">
                                 Appliquer
                             </button>
@@ -270,8 +267,8 @@
     <script>
         // État des signes vitaux
         let vitalSigns = {
-            current: { fc: 75, spo2: 98, fr: 16 },
-            target: { fc: 75, spo2: 98, fr: 16 },
+            current: { fc: 140, spo2: 98, fr: 50 },
+            target: { fc: 140, spo2: 98, fr: 50 },
             transitioning: { fc: false, spo2: false, fr: false }
         };
 
@@ -286,6 +283,8 @@
             startTransitionTimer();
             startWaveforms();
             updateDisplay();
+            // Force une mise à jour des placeholders après un court délai
+            setTimeout(updateDisplay, 100);
         });
 
         function initCanvases() {
@@ -504,24 +503,33 @@
             const current = vitalSigns.current;
             const target = vitalSigns.target;
             const transitioning = vitalSigns.transitioning;
-            
+
             // Mise à jour interface scope
             document.getElementById('fc-display').textContent = current.fc;
             document.getElementById('spo2-display').textContent = current.spo2;
             document.getElementById('fr-display').textContent = current.fr;
-            
+
             // Mise à jour interface contrôle
             document.getElementById('fc-current').textContent = current.fc + ' bpm';
             document.getElementById('fc-target').textContent = target.fc + ' bpm';
             document.getElementById('fc-transitioning').classList.toggle('hidden', !transitioning.fc);
-            
+
             document.getElementById('spo2-current').textContent = current.spo2 + '%';
             document.getElementById('spo2-target').textContent = target.spo2 + '%';
             document.getElementById('spo2-transitioning').classList.toggle('hidden', !transitioning.spo2);
-            
+
             document.getElementById('fr-current').textContent = current.fr + ' /min';
             document.getElementById('fr-target').textContent = target.fr + ' /min';
             document.getElementById('fr-transitioning').classList.toggle('hidden', !transitioning.fr);
+
+            // Mise à jour des placeholders des inputs avec les valeurs actuelles
+            const fcInput = document.getElementById('fc-input');
+            const spo2Input = document.getElementById('spo2-input');
+            const frInput = document.getElementById('fr-input');
+
+            if (fcInput) fcInput.placeholder = target.fc + ' bpm';
+            if (spo2Input) spo2Input.placeholder = target.spo2 + '%';
+            if (frInput) frInput.placeholder = target.fr + ' /min';
         }
 
         function toggleControlMode() {
@@ -573,7 +581,7 @@
         }
 
         function resetValues() {
-            vitalSigns.target = { fc: 75, spo2: 98, fr: 16 };
+            vitalSigns.target = { fc: 140, spo2: 98, fr: 50 };
             updateDisplay();
         }
 
