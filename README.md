@@ -125,14 +125,29 @@ double-clic sur start.bat
 ### 🛠️ Développement
 
 ```bash
-# Frontend seulement
-npm run dev
+# Développement avec hot reload
+python server.py
 
-# Serveur complet
-npm run build
-cd backend
-npm install
-npm start
+# Compilation vers exécutable autonome (.exe)
+python build_executable.py
+
+# Test de l'exécutable
+cd dist
+SimulateurScope.exe
+```
+
+### 📦 Commandes de Build
+
+```bash
+# Installer PyInstaller (une seule fois)
+pip install pyinstaller
+
+# Créer l'exécutable autonome
+python build_executable.py
+
+# Exécutable généré dans : dist/SimulateurScope.exe
+# Taille : ~8 MB
+# Fonctionne sans Python installé
 ```
 
 ## Étapes de Développement Futures

@@ -27,6 +27,7 @@ import webbrowser
 # Configuration globale
 PORT = 3000
 SERVER_IP = "0.0.0.0"
+httpd = None  # Variable globale pour le serveur
 
 # État des signes vitaux
 vitals = {
@@ -57,6 +58,8 @@ class ScopeHandler(SimpleHTTPRequestHandler):
             self.serve_mobile_page()
         elif path == '/api/vitals':
             self.serve_api()
+        elif path == '/api/shutdown':
+            self.serve_shutdown()
         else:
             self.send_error(404)
     
@@ -109,8 +112,23 @@ class ScopeHandler(SimpleHTTPRequestHandler):
         # Vérifier si mobile encore connecté
         if time.time() - vitals['last_mobile_ping'] > 10:
             vitals['mobile_connected'] = False
-        
+
         self.send_json(vitals)
+
+    def serve_shutdown(self):
+        # Endpoint pour fermer le serveur
+        self.send_json({'message': 'Serveur en cours d\'arret...'})
+        # Arrêter le serveur dans un thread séparé
+        import threading
+        def shutdown():
+            time.sleep(0.5)  # Laisser le temps de répondre
+            try:
+                global httpd
+                httpd.shutdown()
+            except:
+                import os
+                os._exit(0)
+        threading.Thread(target=shutdown).start()
     
     def serve_scope_page(self):
         local_ip = get_local_ip()
@@ -132,8 +150,36 @@ class ScopeHandler(SimpleHTTPRequestHandler):
 </head>
 <body class="bg-black text-white min-h-screen">
     <div id="connection-info" class="absolute top-2 left-2 text-xs bg-slate-800 p-2 rounded text-slate-400">
-        <div>Mobile: <a href="''' + mobile_url + '''" class="text-blue-400 underline">''' + mobile_url + '''</a></div>
-        <div id="status"><span class="text-yellow-400">En attente...</span></div>
+        <div class="flex items-center gap-2">
+            <span>Mobile: <a href="''' + mobile_url + '''" class="text-blue-400 underline">''' + mobile_url + '''</a></span>
+            <button onclick="showQRCode()" class="bg-blue-600 hover:bg-blue-700 px-2 py-1 rounded text-white text-xs flex items-center gap-1">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M3 11h8V3H3v8zm2-6h4v4H5V5zM3 21h8v-8H3v8zm2-6h4v4H5v-4zM13 3v8h8V3h-8zm6 6h-4V5h4v4zM13 13h2v2h-2v-2zM15 15h2v2h-2v-2zM13 17h2v2h-2v-2zM15 19h2v2h-2v-2zM17 13h2v2h-2v-2zM19 15h2v2h-2v-2zM17 17h2v2h-2v-2zM19 19h2v2h-2v-2z"/>
+                </svg>
+                QR
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal QR Code -->
+    <div id="qr-modal" class="fixed inset-0 bg-black bg-opacity-75 hidden flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 max-w-sm w-full mx-4">
+            <div class="text-center">
+                <h3 class="text-lg font-bold text-black mb-4">Scanner pour accéder au contrôle mobile</h3>
+                <div id="qr-code" class="flex justify-center mb-4"></div>
+                <button onclick="hideQRCode()" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded">Fermer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toaster de notification -->
+    <div id="toast" class="fixed top-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg transition-transform duration-300 z-50" style="right: -400px;">
+        <div class="flex items-center gap-2">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+            </svg>
+            <span id="toast-message">Mobile connecté !</span>
+        </div>
     </div>
     
     <div class="h-screen flex items-center justify-center p-4">
@@ -378,7 +424,7 @@ class ScopeHandler(SimpleHTTPRequestHandler):
             ecgCurrentCycleSamples = ecgResult.newCycleSamples;
             ecgBuffer[writePosition] = ecgResult.value;
             
-            const plethResult = generateNextPoint(plethPattern, plethCycleProgress, plethCurrentCycleSamples, vitals.current.fc, [-0.2, 1.2], 'pleth');
+            const plethResult = generateNextPoint(plethPattern, plethCycleProgress, plethCurrentCycleSamples, vitals.current.spo2 > 0 ? 60 : 0, [-0.2, 1.2], 'pleth');
             plethCycleProgress = plethResult.newProgress;
             plethCurrentCycleSamples = plethResult.newCycleSamples;
             plethBuffer[writePosition] = plethResult.value;
@@ -415,34 +461,101 @@ class ScopeHandler(SimpleHTTPRequestHandler):
         }
         
         let vitals = {current: {fc: 140, spo2: 98, fr: 50}};
-        
+        let wasMobileConnected = false; // Pour détecter le changement de statut
+
         function updateDisplay() {
             fetch('/api/vitals')
                 .then(r => r.json())
                 .then(data => {
                     vitals = data;
                     
-                    // Ajouter oscillations ±1 sur l'affichage
-                    const fcOscillation = Math.round((Math.random() - 0.5) * 2); // -1, 0, ou +1
-                    const spo2Oscillation = Math.round((Math.random() - 0.5) * 2);
-                    const frOscillation = Math.round((Math.random() - 0.5) * 2);
-                    
+                    // Ajouter oscillations ±1 sur l'affichage (sauf si valeur = 0)
+                    const fcOscillation = data.current.fc === 0 ? 0 : Math.round((Math.random() - 0.5) * 2); // -1, 0, ou +1
+                    const spo2Oscillation = data.current.spo2 === 0 ? 0 : Math.round((Math.random() - 0.5) * 2);
+                    const frOscillation = data.current.fr === 0 ? 0 : Math.round((Math.random() - 0.5) * 2);
+
                     document.getElementById('fc-display').textContent = Math.max(0, data.current.fc + fcOscillation);
                     document.getElementById('spo2-display').textContent = Math.max(0, Math.min(100, data.current.spo2 + spo2Oscillation));
                     document.getElementById('fr-display').textContent = Math.max(0, data.current.fr + frOscillation);
                     
-                    const status = document.getElementById('status');
-                    if (data.mobile_connected) {
-                        status.innerHTML = '<span class="text-green-400">Mobile connecté</span>';
-                    } else {
-                        status.innerHTML = '<span class="text-yellow-400">En attente...</span>';
+                    // Détecter nouvelle connexion mobile
+                    if (data.mobile_connected && !wasMobileConnected) {
+                        wasMobileConnected = true;
+                        hideQRCode(); // Fermer le modal QR
+                        showToast('Mobile connecté !'); // Afficher toaster
+                    } else if (!data.mobile_connected) {
+                        wasMobileConnected = false;
                     }
                 })
                 .catch(() => {
-                    document.getElementById('status').innerHTML = '<span class="text-red-400">Erreur</span>';
+                    // Erreur de connexion - pas d'affichage nécessaire
                 });
         }
-        
+
+        // Fonctions QR Code
+        function showQRCode() {
+            const modal = document.getElementById('qr-modal');
+            const qrContainer = document.getElementById('qr-code');
+            const mobileUrl = window.location.origin + '/mobile';
+
+            // Vider le container
+            qrContainer.innerHTML = '';
+
+            // Générer QR code avec une API publique
+            const qrImg = document.createElement('img');
+            qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(mobileUrl)}`;
+            qrImg.alt = 'QR Code';
+            qrImg.className = 'mx-auto';
+            qrContainer.appendChild(qrImg);
+
+            modal.classList.remove('hidden');
+        }
+
+        function hideQRCode() {
+            document.getElementById('qr-modal').classList.add('hidden');
+        }
+
+        // Fermer modal en cliquant à l'extérieur
+        document.getElementById('qr-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                hideQRCode();
+            }
+        });
+
+        // Fonction toaster
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const messageElement = document.getElementById('toast-message');
+
+            messageElement.textContent = message;
+
+            // Couleurs selon le type
+            if (type === 'success') {
+                toast.className = toast.className.replace(/bg-\w+-600/g, 'bg-green-600');
+            } else if (type === 'error') {
+                toast.className = toast.className.replace(/bg-\w+-600/g, 'bg-red-600');
+            }
+
+            // Afficher le toast (slide in)
+            toast.style.right = '16px';
+
+            // Masquer après 3 secondes (slide out)
+            setTimeout(() => {
+                toast.style.right = '-400px';
+            }, 3000);
+        }
+
+        // Détecter fermeture de page et arrêter le serveur
+        window.addEventListener('beforeunload', function(e) {
+            // Envoyer requête pour arrêter le serveur
+            fetch('/api/shutdown', {method: 'GET'}).catch(() => {});
+        });
+
+        window.addEventListener('unload', function(e) {
+            // Backup au cas où beforeunload ne marche pas
+            fetch('/api/shutdown', {method: 'GET'}).catch(() => {});
+        });
+
         // Démarrer les animations
         setInterval(updateDisplay, 1000);
         setInterval(updateWaveforms, UPDATE_INTERVAL_MS); // 50 FPS comme la version TSX (20ms)
@@ -554,7 +667,7 @@ class ScopeHandler(SimpleHTTPRequestHandler):
             </div>
             
             <div class="bg-slate-800 rounded-lg p-3">
-                <button onclick="reset()" class="w-full bg-red-600 px-4 py-2 rounded font-bold">Reset</button>
+                <button onclick="reset()" class="w-full bg-red-600 px-4 py-2 rounded font-bold">Reset (140 - 98 - 50)</button>
             </div>
         </div>
     </div>
@@ -595,6 +708,7 @@ class ScopeHandler(SimpleHTTPRequestHandler):
             if (val >= 0 && val <= 300) {
                 sendUpdate({fc: val});
                 document.getElementById('fc-input').value = '';
+                document.getElementById('fc-input').blur(); // Fermer le clavier
             }
         }
         
@@ -603,6 +717,7 @@ class ScopeHandler(SimpleHTTPRequestHandler):
             if (val >= 0 && val <= 100) {
                 sendUpdate({spo2: val});
                 document.getElementById('spo2-input').value = '';
+                document.getElementById('spo2-input').blur(); // Fermer le clavier
             }
         }
         
@@ -611,6 +726,7 @@ class ScopeHandler(SimpleHTTPRequestHandler):
             if (val >= 0 && val <= 60) {
                 sendUpdate({fr: val});
                 document.getElementById('fr-input').value = '';
+                document.getElementById('fr-input').blur(); // Fermer le clavier
             }
         }
         
@@ -665,10 +781,11 @@ def transition_worker():
                 step = 1 if diff > 0 else -1
             current['fr'] = int(min(max(0, current['fr'] + step), 60))
 
-if __name__ == "__main__":
+def start_server():
+    global httpd, PORT
     print("Simulateur de Scope Medical v2.0")
     print("=====================================")
-    
+
     # Trouver port libre
     while PORT < 3100:
         try:
@@ -695,10 +812,14 @@ if __name__ == "__main__":
         pass
     
     print("Serveur actif - Ctrl+C pour arreter")
-    
+
     try:
         httpd = socketserver.TCPServer(("", PORT), ScopeHandler)
         httpd.serve_forever()
     except KeyboardInterrupt:
         print("\nArret du serveur")
-        httpd.shutdown()
+        if httpd:
+            httpd.shutdown()
+
+if __name__ == "__main__":
+    start_server()
