@@ -33,6 +33,7 @@ httpd = None  # Variable globale pour le serveur
 vitals = {
     'current': {'fc': 140, 'spo2': 98, 'fr': 50},
     'target': {'fc': 140, 'spo2': 98, 'fr': 50},
+    'transition_duration': {'fc': 10, 'spo2': 10, 'fr': 10},  # Durées en secondes
     'mobile_connected': False,
     'last_mobile_ping': 0
 }
@@ -80,15 +81,30 @@ class ScopeHandler(SimpleHTTPRequestHandler):
                 vitals['last_mobile_ping'] = time.time()
                 vitals['mobile_connected'] = True
                 
-                # Mettre à jour les valeurs
+                # Mettre à jour les valeurs et leurs durées de transition
                 if 'fc' in json_data:
                     vitals['target']['fc'] = int(json_data['fc'])
+                    if 'fcTime' in json_data:
+                        vitals['transition_duration']['fc'] = int(json_data['fcTime'])
+                        print("Mise a jour de la variable FC en {} secondes".format(json_data['fcTime']))
+                    else:
+                        print("Mise a jour de la variable FC en {} secondes (temps precedent)".format(vitals['transition_duration']['fc']))
                 if 'spo2' in json_data:
                     vitals['target']['spo2'] = int(json_data['spo2'])
+                    if 'spo2Time' in json_data:
+                        vitals['transition_duration']['spo2'] = int(json_data['spo2Time'])
+                        print("Mise a jour de la variable SpO2 en {} secondes".format(json_data['spo2Time']))
+                    else:
+                        print("Mise a jour de la variable SpO2 en {} secondes (temps precedent)".format(vitals['transition_duration']['spo2']))
                 if 'fr' in json_data:
                     vitals['target']['fr'] = int(json_data['fr'])
+                    if 'frTime' in json_data:
+                        vitals['transition_duration']['fr'] = int(json_data['frTime'])
+                        print("Mise a jour de la variable FR en {} secondes".format(json_data['frTime']))
+                    else:
+                        print("Mise a jour de la variable FR en {} secondes (temps precedent)".format(vitals['transition_duration']['fr']))
                 
-                print("Mise a jour: FC={}, SpO2={}, FR={}".format(
+                print("Valeurs cibles: FC={}, SpO2={}, FR={}".format(
                     vitals['target']['fc'], vitals['target']['spo2'], vitals['target']['fr']))
                 
                 self.send_json({'success': True})
@@ -603,18 +619,21 @@ class ScopeHandler(SimpleHTTPRequestHandler):
                     </div>
                 </div>
                 <div class="grid grid-cols-3 gap-1 mb-2">
-                    <button onclick="sendUpdate({fc: 50})" class="bg-green-700 hover:bg-green-600 text-white py-1 rounded text-sm font-medium">50</button>
-                    <button onclick="sendUpdate({fc: 70})" class="bg-green-700 hover:bg-green-600 text-white py-1 rounded text-sm font-medium">70</button>
-                    <button onclick="sendUpdate({fc: 80})" class="bg-green-700 hover:bg-green-600 text-white py-1 rounded text-sm font-medium">80</button>
+                    <button onclick="sendFCWithTime(50)" class="bg-green-700 hover:bg-green-600 text-white py-1 rounded text-sm font-medium">50</button>
+                    <button onclick="sendFCWithTime(70)" class="bg-green-700 hover:bg-green-600 text-white py-1 rounded text-sm font-medium">70</button>
+                    <button onclick="sendFCWithTime(80)" class="bg-green-700 hover:bg-green-600 text-white py-1 rounded text-sm font-medium">80</button>
                 </div>
                 <div class="grid grid-cols-3 gap-1 mb-2">
-                    <button onclick="sendUpdate({fc: 90})" class="bg-green-700 hover:bg-green-600 text-white py-1 rounded text-sm font-medium">90</button>
-                    <button onclick="sendUpdate({fc: 110})" class="bg-green-700 hover:bg-green-600 text-white py-1 rounded text-sm font-medium">110</button>
-                    <button onclick="sendUpdate({fc: 130})" class="bg-green-700 hover:bg-green-600 text-white py-1 rounded text-sm font-medium">130</button>
+                    <button onclick="sendFCWithTime(90)" class="bg-green-700 hover:bg-green-600 text-white py-1 rounded text-sm font-medium">90</button>
+                    <button onclick="sendFCWithTime(110)" class="bg-green-700 hover:bg-green-600 text-white py-1 rounded text-sm font-medium">110</button>
+                    <button onclick="sendFCWithTime(130)" class="bg-green-700 hover:bg-green-600 text-white py-1 rounded text-sm font-medium">130</button>
                 </div>
-                <div class="flex space-x-2">
-                    <input type="number" id="fc-input" min="0" max="300" class="flex-1 bg-slate-700 text-white px-3 py-2 rounded" onkeypress="if(event.key==='Enter')updateFC()">
-                    <button onclick="updateFC()" class="bg-green-600 px-4 py-2 rounded font-bold">OK</button>
+                <div class="flex items-center space-x-2">
+                    <input type="number" id="fc-input" min="0" max="300" class="flex-1 bg-slate-700 text-white px-3 py-2 rounded text-sm" onkeypress="if(event.key==='Enter')updateFC()">
+                    <span class="text-slate-300 text-sm whitespace-nowrap">en</span>
+                    <input type="number" id="fc-time" min="1" max="999" value="10" class="w-20 bg-slate-700 text-white px-3 py-2 rounded text-sm">
+                    <span class="text-slate-300 text-sm whitespace-nowrap">s</span>
+                    <button onclick="updateFC()" class="bg-green-600 px-4 py-2 rounded font-bold text-sm whitespace-nowrap">OK</button>
                 </div>
             </div>
             
@@ -627,18 +646,21 @@ class ScopeHandler(SimpleHTTPRequestHandler):
                     </div>
                 </div>
                 <div class="grid grid-cols-3 gap-1 mb-2">
-                    <button onclick="sendUpdate({spo2: 55})" class="bg-cyan-700 hover:bg-cyan-600 text-white py-1 rounded text-sm font-medium">55</button>
-                    <button onclick="sendUpdate({spo2: 65})" class="bg-cyan-700 hover:bg-cyan-600 text-white py-1 rounded text-sm font-medium">65</button>
-                    <button onclick="sendUpdate({spo2: 75})" class="bg-cyan-700 hover:bg-cyan-600 text-white py-1 rounded text-sm font-medium">75</button>
+                    <button onclick="sendSpO2WithTime(55)" class="bg-cyan-700 hover:bg-cyan-600 text-white py-1 rounded text-sm font-medium">55</button>
+                    <button onclick="sendSpO2WithTime(65)" class="bg-cyan-700 hover:bg-cyan-600 text-white py-1 rounded text-sm font-medium">65</button>
+                    <button onclick="sendSpO2WithTime(75)" class="bg-cyan-700 hover:bg-cyan-600 text-white py-1 rounded text-sm font-medium">75</button>
                 </div>
                 <div class="grid grid-cols-3 gap-1 mb-2">
-                    <button onclick="sendUpdate({spo2: 86})" class="bg-cyan-700 hover:bg-cyan-600 text-white py-1 rounded text-sm font-medium">86</button>
-                    <button onclick="sendUpdate({spo2: 95})" class="bg-cyan-700 hover:bg-cyan-600 text-white py-1 rounded text-sm font-medium">95</button>
-                    <button onclick="sendUpdate({spo2: 100})" class="bg-cyan-700 hover:bg-cyan-600 text-white py-1 rounded text-sm font-medium">100</button>
+                    <button onclick="sendSpO2WithTime(86)" class="bg-cyan-700 hover:bg-cyan-600 text-white py-1 rounded text-sm font-medium">86</button>
+                    <button onclick="sendSpO2WithTime(95)" class="bg-cyan-700 hover:bg-cyan-600 text-white py-1 rounded text-sm font-medium">95</button>
+                    <button onclick="sendSpO2WithTime(100)" class="bg-cyan-700 hover:bg-cyan-600 text-white py-1 rounded text-sm font-medium">100</button>
                 </div>
-                <div class="flex space-x-2">
-                    <input type="number" id="spo2-input" min="0" max="100" class="flex-1 bg-slate-700 text-white px-3 py-2 rounded" onkeypress="if(event.key==='Enter')updateSpO2()">
-                    <button onclick="updateSpO2()" class="bg-cyan-600 px-4 py-2 rounded font-bold">OK</button>
+                <div class="flex items-center space-x-2">
+                    <input type="number" id="spo2-input" min="0" max="100" class="flex-1 bg-slate-700 text-white px-3 py-2 rounded text-sm" onkeypress="if(event.key==='Enter')updateSpO2()">
+                    <span class="text-slate-300 text-sm whitespace-nowrap">en</span>
+                    <input type="number" id="spo2-time" min="1" max="999" value="10" class="w-20 bg-slate-700 text-white px-3 py-2 rounded text-sm">
+                    <span class="text-slate-300 text-sm whitespace-nowrap">s</span>
+                    <button onclick="updateSpO2()" class="bg-cyan-600 px-4 py-2 rounded font-bold text-sm whitespace-nowrap">OK</button>
                 </div>
             </div>
             
@@ -651,18 +673,21 @@ class ScopeHandler(SimpleHTTPRequestHandler):
                     </div>
                 </div>
                 <div class="grid grid-cols-3 gap-1 mb-2">
-                    <button onclick="sendUpdate({fr: 0})" class="bg-yellow-700 hover:bg-yellow-600 text-white py-1 rounded text-sm font-medium">0</button>
-                    <button onclick="sendUpdate({fr: 20})" class="bg-yellow-700 hover:bg-yellow-600 text-white py-1 rounded text-sm font-medium">20</button>
-                    <button onclick="sendUpdate({fr: 30})" class="bg-yellow-700 hover:bg-yellow-600 text-white py-1 rounded text-sm font-medium">30</button>
+                    <button onclick="sendFRWithTime(0)" class="bg-yellow-700 hover:bg-yellow-600 text-white py-1 rounded text-sm font-medium">0</button>
+                    <button onclick="sendFRWithTime(20)" class="bg-yellow-700 hover:bg-yellow-600 text-white py-1 rounded text-sm font-medium">20</button>
+                    <button onclick="sendFRWithTime(30)" class="bg-yellow-700 hover:bg-yellow-600 text-white py-1 rounded text-sm font-medium">30</button>
                 </div>
                 <div class="grid grid-cols-3 gap-1 mb-2">
-                    <button onclick="sendUpdate({fr: 40})" class="bg-yellow-700 hover:bg-yellow-600 text-white py-1 rounded text-sm font-medium">40</button>
-                    <button onclick="sendUpdate({fr: 50})" class="bg-yellow-700 hover:bg-yellow-600 text-white py-1 rounded text-sm font-medium">50</button>
-                    <button onclick="sendUpdate({fr: 60})" class="bg-yellow-700 hover:bg-yellow-600 text-white py-1 rounded text-sm font-medium">60</button>
+                    <button onclick="sendFRWithTime(40)" class="bg-yellow-700 hover:bg-yellow-600 text-white py-1 rounded text-sm font-medium">40</button>
+                    <button onclick="sendFRWithTime(50)" class="bg-yellow-700 hover:bg-yellow-600 text-white py-1 rounded text-sm font-medium">50</button>
+                    <button onclick="sendFRWithTime(60)" class="bg-yellow-700 hover:bg-yellow-600 text-white py-1 rounded text-sm font-medium">60</button>
                 </div>
-                <div class="flex space-x-2">
-                    <input type="number" id="fr-input" min="0" max="60" class="flex-1 bg-slate-700 text-white px-3 py-2 rounded" onkeypress="if(event.key==='Enter')updateFR()">
-                    <button onclick="updateFR()" class="bg-yellow-600 px-4 py-2 rounded font-bold">OK</button>
+                <div class="flex items-center space-x-2">
+                    <input type="number" id="fr-input" min="0" max="60" class="flex-1 bg-slate-700 text-white px-3 py-2 rounded text-sm" onkeypress="if(event.key==='Enter')updateFR()">
+                    <span class="text-slate-300 text-sm whitespace-nowrap">en</span>
+                    <input type="number" id="fr-time" min="1" max="999" value="10" class="w-20 bg-slate-700 text-white px-3 py-2 rounded text-sm">
+                    <span class="text-slate-300 text-sm whitespace-nowrap">s</span>
+                    <button onclick="updateFR()" class="bg-yellow-600 px-4 py-2 rounded font-bold text-sm whitespace-nowrap">OK</button>
                 </div>
             </div>
             
@@ -703,29 +728,51 @@ class ScopeHandler(SimpleHTTPRequestHandler):
             });
         }
         
+        // Fonctions pour envoyer les valeurs préremplies avec temps
+        function sendFCWithTime(fcValue) {
+            const timeVal = parseInt(document.getElementById('fc-time').value) || 10;
+            sendUpdate({fc: fcValue, fcTime: timeVal});
+        }
+        
+        function sendSpO2WithTime(spo2Value) {
+            const timeVal = parseInt(document.getElementById('spo2-time').value) || 10;
+            sendUpdate({spo2: spo2Value, spo2Time: timeVal});
+        }
+        
+        function sendFRWithTime(frValue) {
+            const timeVal = parseInt(document.getElementById('fr-time').value) || 10;
+            sendUpdate({fr: frValue, frTime: timeVal});
+        }
+        
         function updateFC() {
             const val = parseInt(document.getElementById('fc-input').value);
+            const timeVal = parseInt(document.getElementById('fc-time').value) || 10;
             if (val >= 0 && val <= 300) {
-                sendUpdate({fc: val});
+                sendUpdate({fc: val, fcTime: timeVal});
                 document.getElementById('fc-input').value = '';
+                // Garder la valeur de temps dans l'input
                 document.getElementById('fc-input').blur(); // Fermer le clavier
             }
         }
         
         function updateSpO2() {
             const val = parseInt(document.getElementById('spo2-input').value);
+            const timeVal = parseInt(document.getElementById('spo2-time').value) || 10;
             if (val >= 0 && val <= 100) {
-                sendUpdate({spo2: val});
+                sendUpdate({spo2: val, spo2Time: timeVal});
                 document.getElementById('spo2-input').value = '';
+                // Garder la valeur de temps dans l'input
                 document.getElementById('spo2-input').blur(); // Fermer le clavier
             }
         }
         
         function updateFR() {
             const val = parseInt(document.getElementById('fr-input').value);
+            const timeVal = parseInt(document.getElementById('fr-time').value) || 10;
             if (val >= 0 && val <= 60) {
-                sendUpdate({fr: val});
+                sendUpdate({fr: val, frTime: timeVal});
                 document.getElementById('fr-input').value = '';
+                // Garder la valeur de temps dans l'input
                 document.getElementById('fr-input').blur(); // Fermer le clavier
             }
         }
@@ -751,35 +798,54 @@ class ScopeHandler(SimpleHTTPRequestHandler):
 
 def transition_worker():
     """Thread pour les transitions proportionnelles"""
+    transition_progress = {'fc': 0.0, 'spo2': 0.0, 'fr': 0.0}  # Progression décimale
+    
     while True:
         time.sleep(0.1)  # Vérification rapide (10x par seconde)
         current = vitals['current']
         target = vitals['target']
+        durations = vitals['transition_duration']
         
-        # FC: Transition en 10 secondes
+        # FC: Transition selon la durée définie
         if current['fc'] != target['fc']:
             diff = target['fc'] - current['fc']
-            # Pour atteindre la cible en 10 secondes avec 100 étapes (10x/s * 10s)
-            step = diff / 100.0
-            if abs(step) < 1:
-                step = 1 if diff > 0 else -1
-            current['fc'] = int(min(max(0, current['fc'] + step), 300))
+            # Incrément par 0.1s = diff / (durée * 10)
+            step = diff / (durations['fc'] * 10.0)
+            transition_progress['fc'] += step
+            
+            # Appliquer seulement quand on atteint un entier
+            if abs(transition_progress['fc']) >= 1:
+                increment = int(transition_progress['fc'])
+                current['fc'] = int(min(max(0, current['fc'] + increment), 300))
+                transition_progress['fc'] -= increment
+        else:
+            transition_progress['fc'] = 0.0
         
-        # SpO2: Transition en 10 secondes
+        # SpO2: Transition selon la durée définie
         if current['spo2'] != target['spo2']:
             diff = target['spo2'] - current['spo2']
-            step = diff / 100.0
-            if abs(step) < 1:
-                step = 1 if diff > 0 else -1
-            current['spo2'] = int(min(max(0, current['spo2'] + step), 100))
+            step = diff / (durations['spo2'] * 10.0)
+            transition_progress['spo2'] += step
+            
+            if abs(transition_progress['spo2']) >= 1:
+                increment = int(transition_progress['spo2'])
+                current['spo2'] = int(min(max(0, current['spo2'] + increment), 100))
+                transition_progress['spo2'] -= increment
+        else:
+            transition_progress['spo2'] = 0.0
         
-        # FR: Transition en 10 secondes
+        # FR: Transition selon la durée définie
         if current['fr'] != target['fr']:
             diff = target['fr'] - current['fr']
-            step = diff / 100.0
-            if abs(step) < 1:
-                step = 1 if diff > 0 else -1
-            current['fr'] = int(min(max(0, current['fr'] + step), 60))
+            step = diff / (durations['fr'] * 10.0)
+            transition_progress['fr'] += step
+            
+            if abs(transition_progress['fr']) >= 1:
+                increment = int(transition_progress['fr'])
+                current['fr'] = int(min(max(0, current['fr'] + increment), 60))
+                transition_progress['fr'] -= increment
+        else:
+            transition_progress['fr'] = 0.0
 
 def start_server():
     global httpd, PORT
