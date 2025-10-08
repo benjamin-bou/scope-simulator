@@ -45,7 +45,8 @@ def get_local_ip():
         ip = s.getsockname()[0]
         s.close()
         return ip
-    except:
+    except Exception as e:
+        print("ERREUR: Impossible de determiner l'IP locale - {}".format(str(e)))
         return "127.0.0.1"
 
 class ScopeHandler(SimpleHTTPRequestHandler):
@@ -85,22 +86,37 @@ class ScopeHandler(SimpleHTTPRequestHandler):
                 if 'fc' in json_data:
                     vitals['target']['fc'] = int(json_data['fc'])
                     if 'fcTime' in json_data:
-                        vitals['transition_duration']['fc'] = int(json_data['fcTime'])
-                        print("Mise a jour de la variable FC en {} secondes".format(json_data['fcTime']))
+                        vitals['transition_duration']['fc'] = max(0, int(json_data['fcTime']))
+                        # Si durée = 0, appliquer instantanément
+                        if vitals['transition_duration']['fc'] == 0:
+                            vitals['current']['fc'] = vitals['target']['fc']
+                            print("Mise a jour instantanee de la variable FC")
+                        else:
+                            print("Mise a jour de la variable FC en {} secondes".format(json_data['fcTime']))
                     else:
                         print("Mise a jour de la variable FC en {} secondes (temps precedent)".format(vitals['transition_duration']['fc']))
                 if 'spo2' in json_data:
                     vitals['target']['spo2'] = int(json_data['spo2'])
                     if 'spo2Time' in json_data:
-                        vitals['transition_duration']['spo2'] = int(json_data['spo2Time'])
-                        print("Mise a jour de la variable SpO2 en {} secondes".format(json_data['spo2Time']))
+                        vitals['transition_duration']['spo2'] = max(0, int(json_data['spo2Time']))
+                        # Si durée = 0, appliquer instantanément
+                        if vitals['transition_duration']['spo2'] == 0:
+                            vitals['current']['spo2'] = vitals['target']['spo2']
+                            print("Mise a jour instantanee de la variable SpO2")
+                        else:
+                            print("Mise a jour de la variable SpO2 en {} secondes".format(json_data['spo2Time']))
                     else:
                         print("Mise a jour de la variable SpO2 en {} secondes (temps precedent)".format(vitals['transition_duration']['spo2']))
                 if 'fr' in json_data:
                     vitals['target']['fr'] = int(json_data['fr'])
                     if 'frTime' in json_data:
-                        vitals['transition_duration']['fr'] = int(json_data['frTime'])
-                        print("Mise a jour de la variable FR en {} secondes".format(json_data['frTime']))
+                        vitals['transition_duration']['fr'] = max(0, int(json_data['frTime']))
+                        # Si durée = 0, appliquer instantanément
+                        if vitals['transition_duration']['fr'] == 0:
+                            vitals['current']['fr'] = vitals['target']['fr']
+                            print("Mise a jour instantanee de la variable FR")
+                        else:
+                            print("Mise a jour de la variable FR en {} secondes".format(json_data['frTime']))
                     else:
                         print("Mise a jour de la variable FR en {} secondes (temps precedent)".format(vitals['transition_duration']['fr']))
                 
@@ -188,18 +204,9 @@ class ScopeHandler(SimpleHTTPRequestHandler):
         </div>
     </div>
 
-    <!-- Toaster de notification -->
-    <div id="toast" class="fixed top-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg transition-transform duration-300 z-50" style="right: -400px;">
-        <div class="flex items-center gap-2">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-            </svg>
-            <span id="toast-message">Mobile connecté !</span>
-        </div>
-    </div>
     
-    <div class="h-screen flex items-center justify-center p-4">
-        <div class="w-full max-w-6xl h-[700px] bg-black rounded-lg border-2 border-slate-700 grid grid-cols-[3fr,1fr] gap-2 p-2">
+    <div class="min-h-screen flex items-center justify-center p-4">
+        <div class="w-full max-w-6xl max-h-[90vh] bg-black rounded-lg border-2 border-slate-700 grid grid-cols-[3fr,1fr] gap-2 p-2">
             
             <div class="grid grid-rows-3 gap-1">
                 <div class="bg-slate-800 rounded p-2 waveform"><div class="text-green-400 text-sm mb-1">ECG (FC)</div><canvas id="ecg-canvas" width="800" height="120" class="w-full bg-black rounded" style="height: 80%"></canvas></div>
@@ -450,12 +457,6 @@ class ScopeHandler(SimpleHTTPRequestHandler):
             respCurrentCycleSamples = respResult.newCycleSamples;
             respBuffer[writePosition] = respResult.value;
             
-            // DEBUG - Log pour voir ce qui se passe
-            if (Math.floor(sweepPosition) % 50 === 0) {
-                console.log('Position:', writePosition, 'ECG:', ecgResult.value, 'FC:', vitals.current.fc);
-                console.log('Buffer sample:', ecgBuffer.slice(writePosition-5, writePosition+5));
-            }
-            
             // Effacer la zone de balayage APRÈS avoir écrit le nouveau point (créer l'espace vide)
             for (let i = 1; i < ERASE_WIDTH; i++) {
                 const pos = (writePosition + i) % CANVAS_WIDTH;
@@ -493,12 +494,11 @@ class ScopeHandler(SimpleHTTPRequestHandler):
                     document.getElementById('fc-display').textContent = Math.max(0, data.current.fc + fcOscillation);
                     document.getElementById('spo2-display').textContent = Math.max(0, Math.min(100, data.current.spo2 + spo2Oscillation));
                     document.getElementById('fr-display').textContent = Math.max(0, data.current.fr + frOscillation);
-                    
+
                     // Détecter nouvelle connexion mobile
                     if (data.mobile_connected && !wasMobileConnected) {
                         wasMobileConnected = true;
                         hideQRCode(); // Fermer le modal QR
-                        showToast('Mobile connecté !'); // Afficher toaster
                     } else if (!data.mobile_connected) {
                         wasMobileConnected = false;
                     }
@@ -537,29 +537,6 @@ class ScopeHandler(SimpleHTTPRequestHandler):
                 hideQRCode();
             }
         });
-
-        // Fonction toaster
-        function showToast(message, type = 'success') {
-            const toast = document.getElementById('toast');
-            const messageElement = document.getElementById('toast-message');
-
-            messageElement.textContent = message;
-
-            // Couleurs selon le type
-            if (type === 'success') {
-                toast.className = toast.className.replace(/bg-\w+-600/g, 'bg-green-600');
-            } else if (type === 'error') {
-                toast.className = toast.className.replace(/bg-\w+-600/g, 'bg-red-600');
-            }
-
-            // Afficher le toast (slide in)
-            toast.style.right = '16px';
-
-            // Masquer après 3 secondes (slide out)
-            setTimeout(() => {
-                toast.style.right = '-400px';
-            }, 3000);
-        }
 
         // Détecter fermeture de page et arrêter le serveur
         window.addEventListener('beforeunload', function(e) {
@@ -604,11 +581,6 @@ class ScopeHandler(SimpleHTTPRequestHandler):
 </head>
 <body class="bg-slate-900 text-white min-h-screen">
     <div class="container mx-auto p-4 max-w-md">
-        <div class="text-center mb-6">
-            <h1 class="text-2xl font-bold">Contrôle Scope</h1>
-            <div id="status" class="text-green-400 mt-2">Connecté</div>
-        </div>
-        
         <div class="space-y-3">
             <div class="bg-slate-800 rounded-lg p-3">
                 <div class="flex justify-between items-center mb-2">
@@ -728,20 +700,17 @@ class ScopeHandler(SimpleHTTPRequestHandler):
             });
         }
         
-        // Fonctions pour envoyer les valeurs préremplies avec temps
+        // Fonctions pour remplir l'input avec les valeurs préremplies
         function sendFCWithTime(fcValue) {
-            const timeVal = parseInt(document.getElementById('fc-time').value) || 10;
-            sendUpdate({fc: fcValue, fcTime: timeVal});
+            document.getElementById('fc-input').value = fcValue;
         }
-        
+
         function sendSpO2WithTime(spo2Value) {
-            const timeVal = parseInt(document.getElementById('spo2-time').value) || 10;
-            sendUpdate({spo2: spo2Value, spo2Time: timeVal});
+            document.getElementById('spo2-input').value = spo2Value;
         }
-        
+
         function sendFRWithTime(frValue) {
-            const timeVal = parseInt(document.getElementById('fr-time').value) || 10;
-            sendUpdate({fr: frValue, frTime: timeVal});
+            document.getElementById('fr-input').value = frValue;
         }
         
         function updateFC() {
@@ -777,7 +746,7 @@ class ScopeHandler(SimpleHTTPRequestHandler):
             }
         }
         
-        function reset() { sendUpdate({fc: 140, spo2: 98, fr: 50}); }
+        function reset() { sendUpdate({fc: 140, spo2: 98, fr: 50, fcTime: 0, spo2Time: 0, frTime: 0}); }
         
         setInterval(updateDisplay, 1000);
         updateDisplay();
@@ -797,55 +766,75 @@ class ScopeHandler(SimpleHTTPRequestHandler):
         pass  # Supprimer les logs HTTP
 
 def transition_worker():
-    """Thread pour les transitions proportionnelles"""
-    transition_progress = {'fc': 0.0, 'spo2': 0.0, 'fr': 0.0}  # Progression décimale
-    
+    """Thread pour les transitions proportionnelles basées sur le temps réel"""
+    transition_start_time = {'fc': None, 'spo2': None, 'fr': None}
+    transition_start_value = {'fc': None, 'spo2': None, 'fr': None}
+
     while True:
-        time.sleep(0.1)  # Vérification rapide (10x par seconde)
+        time.sleep(0.05)  # Vérification rapide (20x par seconde pour plus de fluidité)
         current = vitals['current']
         target = vitals['target']
         durations = vitals['transition_duration']
-        
-        # FC: Transition selon la durée définie
+        current_time = time.time()
+
+        # FC: Transition basée sur le temps réel
         if current['fc'] != target['fc']:
-            diff = target['fc'] - current['fc']
-            # Incrément par 0.1s = diff / (durée * 10)
-            step = diff / (durations['fc'] * 10.0)
-            transition_progress['fc'] += step
-            
-            # Appliquer seulement quand on atteint un entier
-            if abs(transition_progress['fc']) >= 1:
-                increment = int(transition_progress['fc'])
-                current['fc'] = int(min(max(0, current['fc'] + increment), 300))
-                transition_progress['fc'] -= increment
+            # Démarrer une nouvelle transition si nécessaire
+            if transition_start_time['fc'] is None:
+                transition_start_time['fc'] = current_time
+                transition_start_value['fc'] = current['fc']
+
+            elapsed = current_time - transition_start_time['fc']
+            progress = min(1.0, elapsed / durations['fc'])  # 0.0 à 1.0
+
+            diff = target['fc'] - transition_start_value['fc']
+            new_value = transition_start_value['fc'] + (diff * progress)
+            current['fc'] = int(min(max(0, new_value), 300))
+
+            # Si on a atteint la cible, la fixer exactement
+            if progress >= 1.0:
+                current['fc'] = target['fc']
+                transition_start_time['fc'] = None
         else:
-            transition_progress['fc'] = 0.0
-        
-        # SpO2: Transition selon la durée définie
+            transition_start_time['fc'] = None
+
+        # SpO2: Transition basée sur le temps réel
         if current['spo2'] != target['spo2']:
-            diff = target['spo2'] - current['spo2']
-            step = diff / (durations['spo2'] * 10.0)
-            transition_progress['spo2'] += step
-            
-            if abs(transition_progress['spo2']) >= 1:
-                increment = int(transition_progress['spo2'])
-                current['spo2'] = int(min(max(0, current['spo2'] + increment), 100))
-                transition_progress['spo2'] -= increment
+            if transition_start_time['spo2'] is None:
+                transition_start_time['spo2'] = current_time
+                transition_start_value['spo2'] = current['spo2']
+
+            elapsed = current_time - transition_start_time['spo2']
+            progress = min(1.0, elapsed / durations['spo2'])
+
+            diff = target['spo2'] - transition_start_value['spo2']
+            new_value = transition_start_value['spo2'] + (diff * progress)
+            current['spo2'] = int(min(max(0, new_value), 100))
+
+            if progress >= 1.0:
+                current['spo2'] = target['spo2']
+                transition_start_time['spo2'] = None
         else:
-            transition_progress['spo2'] = 0.0
-        
-        # FR: Transition selon la durée définie
+            transition_start_time['spo2'] = None
+
+        # FR: Transition basée sur le temps réel
         if current['fr'] != target['fr']:
-            diff = target['fr'] - current['fr']
-            step = diff / (durations['fr'] * 10.0)
-            transition_progress['fr'] += step
-            
-            if abs(transition_progress['fr']) >= 1:
-                increment = int(transition_progress['fr'])
-                current['fr'] = int(min(max(0, current['fr'] + increment), 60))
-                transition_progress['fr'] -= increment
+            if transition_start_time['fr'] is None:
+                transition_start_time['fr'] = current_time
+                transition_start_value['fr'] = current['fr']
+
+            elapsed = current_time - transition_start_time['fr']
+            progress = min(1.0, elapsed / durations['fr'])
+
+            diff = target['fr'] - transition_start_value['fr']
+            new_value = transition_start_value['fr'] + (diff * progress)
+            current['fr'] = int(min(max(0, new_value), 60))
+
+            if progress >= 1.0:
+                current['fr'] = target['fr']
+                transition_start_time['fr'] = None
         else:
-            transition_progress['fr'] = 0.0
+            transition_start_time['fr'] = None
 
 def start_server():
     global httpd, PORT
@@ -860,7 +849,11 @@ def start_server():
                 break
         except OSError:
             PORT += 1
-    
+
+    if PORT >= 3100:
+        print("ERREUR: Impossible de trouver un port disponible entre 3000 et 3099")
+        return
+
     local_ip = get_local_ip()
     print("Interface scope: http://{}:{}".format(local_ip, PORT))
     print("Mobile: http://{}:{}/mobile".format(local_ip, PORT))
@@ -874,8 +867,8 @@ def start_server():
     # Ouvrir navigateur
     try:
         webbrowser.open("http://{}:{}".format(local_ip, PORT))
-    except:
-        pass
+    except Exception as e:
+        print("ERREUR: Impossible d'ouvrir le navigateur automatiquement - {}".format(str(e)))
     
     print("Serveur actif - Ctrl+C pour arreter")
 
@@ -884,6 +877,10 @@ def start_server():
         httpd.serve_forever()
     except KeyboardInterrupt:
         print("\nArret du serveur")
+        if httpd:
+            httpd.shutdown()
+    except Exception as e:
+        print("ERREUR: Le serveur a rencontre une erreur - {}".format(str(e)))
         if httpd:
             httpd.shutdown()
 
