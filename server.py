@@ -240,6 +240,33 @@ class ScopeHandler(SimpleHTTPRequestHandler):
     </div>
     
     <script>
+        // Wake Lock pour empêcher la mise en veille
+        let wakeLock = null;
+
+        async function requestWakeLock() {
+            try {
+                if ('wakeLock' in navigator) {
+                    wakeLock = await navigator.wakeLock.request('screen');
+
+                    wakeLock.addEventListener('release', () => {
+                        console.log('Wake Lock libéré');
+                    });
+                }
+            } catch (err) {
+                console.error('Erreur Wake Lock:', err);
+            }
+        }
+
+        // Réactiver le Wake Lock si la page redevient visible
+        document.addEventListener('visibilitychange', async () => {
+            if (wakeLock !== null && document.visibilityState === 'visible') {
+                await requestWakeLock();
+            }
+        });
+
+        // Activer le Wake Lock au chargement
+        requestWakeLock();
+
         // Configuration du balayage scope réaliste
         const SAMPLES_PER_SECOND = 50;
         const UPDATE_INTERVAL_MS = 1000 / SAMPLES_PER_SECOND; // 20ms
